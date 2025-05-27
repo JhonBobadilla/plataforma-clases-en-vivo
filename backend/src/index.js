@@ -6,6 +6,9 @@ const path = require('path');
 
 const healthRoutes = require('./routes/health');
 const userRoutes = require('./routes/userRoutes');
+const claseRoutes = require('./routes/claseRoutes');
+const authRoutes = require('./routes/authRoutes');
+const cursoRoutes = require('./routes/cursoRoutes');
 
 const app = express();
 app.use(cors());
@@ -21,6 +24,20 @@ const swaggerOptions = {
       description: 'Documentación de la API',
     },
     servers: [{ url: 'http://localhost:3000' }],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
   apis: [path.join(__dirname, '/routes/*.js')],
 };
@@ -31,22 +48,17 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // Carga de rutas
 app.use('/api/health', healthRoutes); // Ruta base para health
 app.use('/api/usuarios', userRoutes);
+app.use('/api/clases', claseRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/cursos', cursoRoutes);
 
 app.get('/', (req, res) => {
   res.send('API funcionando!');
 });
 
-const claseRoutes = require('./routes/claseRoutes');
-app.use('/api/clases', claseRoutes);
-
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
-
-const cursoRoutes = require('./routes/cursoRoutes');
-app.use('/api/cursos', cursoRoutes);
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
 

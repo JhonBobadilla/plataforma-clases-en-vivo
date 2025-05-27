@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'mi_secreto_ultrasecreto';
+const JWT_SECRET = 'supersecreto123';
+
 
 // Middleware para verificar el token JWT
 function verificarToken(req, res, next) {

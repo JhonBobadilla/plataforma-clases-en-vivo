@@ -1,99 +1,166 @@
-const Curso = require('../models/Curso');
-const { cursos, clases } = require('../data/memoria');
+const pool = require('../config/db');
 
 // Crear curso
-const crearCurso = (req, res) => {
+const crearCurso = async (req, res) => {
   const { nombre, descripcion, profesorId } = req.body;
   if (!nombre || !descripcion || !profesorId) {
     return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
   }
-  const id = cursos.length + 1;
-  const nuevoCurso = new Curso({ id, nombre, descripcion, profesorId });
-  nuevoCurso.alumnos = [];
-  cursos.push(nuevoCurso);
-  res.status(201).json({
-    message: 'Curso creado correctamente',
-    curso: nuevoCurso
-  });
+  try {
+    // Valida que el profesor exista
+    const profesor = await pool.query('SELECT * FROM usuarios WHERE id = $1 AND rol = $2', [profesorId, 'profesor']);
+    if (profesor.rows.length === 0) {
+      return res.status(404).json({ message: 'El profesor especificado no existe.' });
+    }
+    const result = await pool.query(
+      'INSERT INTO cursos (nombre, descripcion, profesor_id) VALUES ($1, $2, $3) RETURNING *',
+      [nombre, descripcion, profesorId]
+    );
+    return res.status(201).json({
+      message: 'Curso creado correctamente',
+      curso: result.rows[0],
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error creando curso', error: err.message });
+  }
 };
 
 // Listar todos los cursos
-const listarCursos = (req, res) => {
-  res.status(200).json(cursos);
+const listarCursos = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM cursos');
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ message: 'Error listando cursos', error: err.message });
+  }
 };
 
 // Obtener curso por id
-const obtenerCurso = (req, res) => {
+const obtenerCurso = async (req, res) => {
   const { id } = req.params;
-  const curso = cursos.find(c => c.id === parseInt(id));
-  if (!curso) {
-    return res.status(404).json({ message: 'Curso no encontrado.' });
+  try {
+    const result = await pool.query('SELECT * FROM cursos WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Curso no encontrado.' });
+    }
+    return res.status(200).json(result.rows[0]);
+  } catch (err) {
+    return res.status(500).json({ message: 'Error obteniendo curso', error: err.message });
   }
-  res.status(200).json(curso);
 };
 
 // Inscribir alumno en curso
-const inscribirAlumno = (req, res) => {
-  const { id } = req.params;
+const inscribirAlumno = async (req, res) => {
+  const { id } = req.params; // id del curso
   const { alumnoId } = req.body;
-  const curso = cursos.find(c => c.id === parseInt(id));
-  if (!curso) {
-    return res.status(404).json({ message: 'Curso no encontrado.' });
-  }
   if (!alumnoId) {
     return res.status(400).json({ message: 'alumnoId es obligatorio.' });
   }
-  if (!curso.alumnos) curso.alumnos = [];
-  if (curso.alumnos.includes(alumnoId)) {
-    return res.status(409).json({ message: 'El usuario ya está inscrito en el curso.' });
+  try {
+    // Valida que el curso exista
+    const curso = await pool.query('SELECT * FROM cursos WHERE id = $1', [id]);
+    if (curso.rows.length === 0) {
+      return res.status(404).json({ message: 'Curso no encontrado.' });
+    }
+    // Valida que el alumno exista
+    const alumno = await pool.query('SELECT * FROM usuarios WHERE id = $1 AND rol = $2', [alumnoId, 'alumno']);
+    if (alumno.rows.length === 0) {
+      return res.status(404).json({ message: 'El alumno especificado no existe.' });
+    }
+    // Verifica si ya está inscrito
+    const yaInscrito = await pool.query(
+      'SELECT * FROM cursos_alumnos WHERE curso_id = $1 AND alumno_id = $2',
+      [id, alumnoId]
+    );
+    if (yaInscrito.rows.length > 0) {
+      return res.status(409).json({ message: 'El usuario ya está inscrito en el curso.' });
+    }
+    await pool.query(
+      'INSERT INTO cursos_alumnos (curso_id, alumno_id) VALUES ($1, $2)',
+      [id, alumnoId]
+    );
+    return res.status(200).json({ message: 'Alumno inscrito correctamente en el curso.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error inscribiendo alumno', error: err.message });
   }
-  curso.alumnos.push(alumnoId);
-  res.status(200).json({ message: 'Alumno inscrito correctamente en el curso.', curso });
 };
 
-// ** Nuevo: Desinscribir alumno de curso **
-const desinscribirAlumno = (req, res) => {
-  const { id } = req.params;
+// Desinscribir alumno de curso
+const desinscribirAlumno = async (req, res) => {
+  const { id } = req.params; // id del curso
   const { alumnoId } = req.body;
-  const curso = cursos.find(c => c.id === parseInt(id));
-  if (!curso) {
-    return res.status(404).json({ message: 'Curso no encontrado.' });
-  }
   if (!alumnoId) {
     return res.status(400).json({ message: 'alumnoId es obligatorio.' });
   }
-  if (!curso.alumnos || !curso.alumnos.includes(alumnoId)) {
-    return res.status(404).json({ message: 'El alumno no está inscrito en el curso.' });
+  try {
+    // Valida que el curso exista
+    const curso = await pool.query('SELECT * FROM cursos WHERE id = $1', [id]);
+    if (curso.rows.length === 0) {
+      return res.status(404).json({ message: 'Curso no encontrado.' });
+    }
+    // Verifica si está inscrito
+    const yaInscrito = await pool.query(
+      'SELECT * FROM cursos_alumnos WHERE curso_id = $1 AND alumno_id = $2',
+      [id, alumnoId]
+    );
+    if (yaInscrito.rows.length === 0) {
+      return res.status(404).json({ message: 'El alumno no está inscrito en el curso.' });
+    }
+    await pool.query(
+      'DELETE FROM cursos_alumnos WHERE curso_id = $1 AND alumno_id = $2',
+      [id, alumnoId]
+    );
+    return res.status(200).json({ message: 'Alumno desinscrito correctamente del curso.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error desinscribiendo alumno', error: err.message });
   }
-  curso.alumnos = curso.alumnos.filter(a => a !== alumnoId);
-  res.status(200).json({ message: 'Alumno desinscrito correctamente del curso.', curso });
 };
 
 // Editar curso
-const editarCurso = (req, res) => {
+const editarCurso = async (req, res) => {
   const { id } = req.params;
   const { nombre, descripcion } = req.body;
-  const curso = cursos.find(c => c.id === parseInt(id));
-  if (!curso) return res.status(404).json({ message: 'Curso no encontrado.' });
-  if (nombre) curso.nombre = nombre;
-  if (descripcion) curso.descripcion = descripcion;
-  res.status(200).json({ message: 'Curso actualizado correctamente.', curso });
+  try {
+    const result = await pool.query('SELECT * FROM cursos WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Curso no encontrado.' });
+    }
+    const cursoActual = result.rows[0];
+    const nuevoNombre = nombre || cursoActual.nombre;
+    const nuevaDescripcion = descripcion || cursoActual.descripcion;
+    await pool.query(
+      'UPDATE cursos SET nombre = $1, descripcion = $2 WHERE id = $3',
+      [nuevoNombre, nuevaDescripcion, id]
+    );
+    return res.status(200).json({ message: 'Curso actualizado correctamente.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error actualizando curso', error: err.message });
+  }
 };
 
 // Eliminar curso
-const eliminarCurso = (req, res) => {
+const eliminarCurso = async (req, res) => {
   const { id } = req.params;
-  const idx = cursos.findIndex(c => c.id === parseInt(id));
-  if (idx === -1) return res.status(404).json({ message: 'Curso no encontrado.' });
-  cursos.splice(idx, 1);
-  res.status(200).json({ message: 'Curso eliminado correctamente.' });
+  try {
+    const result = await pool.query('DELETE FROM cursos WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Curso no encontrado.' });
+    }
+    return res.status(200).json({ message: 'Curso eliminado correctamente.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error eliminando curso', error: err.message });
+  }
 };
 
 // Listar clases de un curso
-const listarClasesDeCurso = (req, res) => {
+const listarClasesDeCurso = async (req, res) => {
   const { id } = req.params;
-  const clasesCurso = clases.filter(c => c.cursoId === parseInt(id));
-  res.status(200).json(clasesCurso);
+  try {
+    const result = await pool.query('SELECT * FROM clases WHERE curso_id = $1', [id]);
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ message: 'Error listando clases de curso', error: err.message });
+  }
 };
 
 module.exports = {
@@ -101,11 +168,11 @@ module.exports = {
   listarCursos,
   obtenerCurso,
   inscribirAlumno,
-  desinscribirAlumno, // <--- nuevo export
+  desinscribirAlumno,
   editarCurso,
   eliminarCurso,
   listarClasesDeCurso,
-  cursos
 };
+
 
 

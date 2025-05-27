@@ -1,29 +1,18 @@
-const User = require('../models/User');
-const { cursos } = require('./cursoController'); // Importa los cursos para relación
-const { clases } = require('./claseController'); // Importa las clases para relación
+const pool = require('../config/db');
 const crypto = require('crypto');
 
-const ROLES_PERMITIDOS = ['profesor', 'alumno'];
-let users = [];
-
 // Registrar usuario
-const registerUser = (req, res) => {
+const registerUser = async (req, res) => {
   const { nombre, email, password, rol, telefono, pais, ciudad, edad } = req.body;
 
   if (
-    !nombre ||
-    !email ||
-    !password ||
-    !rol ||
-    !telefono ||
-    !pais ||
-    !ciudad ||
-    !edad
+    !nombre || !email || !password || !rol || !telefono ||
+    !pais || !ciudad || !edad
   ) {
     return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
   }
 
-  if (!ROLES_PERMITIDOS.includes(rol)) {
+  if (!['profesor', 'alumno'].includes(rol)) {
     return res.status(400).json({ message: 'Rol no válido. Solo se permite: profesor o alumno.' });
   }
 
@@ -31,143 +20,196 @@ const registerUser = (req, res) => {
     return res.status(400).json({ message: 'Edad no válida. Debe ser un número entre 10 y 120.' });
   }
 
-  const existe = users.find(u => u.email === email);
-  if (existe) {
-    return res.status(409).json({ message: 'El email ya está registrado.' });
+  try {
+    // Verifica si ya existe
+    const existe = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    if (existe.rows.length > 0) {
+      return res.status(409).json({ message: 'El email ya está registrado.' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO usuarios 
+        (nombre, email, password, rol, telefono, pais, ciudad, edad)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, nombre, email, rol, telefono, pais, ciudad, edad`,
+      [nombre, email, password, rol, telefono, pais, ciudad, edad]
+    );
+    return res.status(201).json({
+      message: 'Usuario registrado correctamente',
+      usuario: result.rows[0],
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error registrando usuario', error: err.message });
   }
-
-  const id = users.length + 1;
-  const nuevoUsuario = new User({ id, nombre, email, password, rol, telefono, pais, ciudad, edad });
-  users.push(nuevoUsuario);
-
-  res.status(201).json({
-    message: 'Usuario registrado correctamente',
-    usuario: { id, nombre, email, rol, telefono, pais, ciudad, edad }
-  });
 };
 
 // Listar usuarios (todos o por rol)
-const listarUsuarios = (req, res) => {
+const listarUsuarios = async (req, res) => {
   const { rol } = req.query;
-  if (rol) {
-    const filtrados = users.filter(u => u.rol === rol);
-    return res.status(200).json(filtrados);
+  try {
+    let result;
+    if (rol) {
+      result = await pool.query('SELECT * FROM usuarios WHERE rol = $1', [rol]);
+    } else {
+      result = await pool.query('SELECT * FROM usuarios');
+    }
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ message: 'Error listando usuarios', error: err.message });
   }
-  res.status(200).json(users);
 };
 
 // Obtener usuario por id
-const obtenerUsuario = (req, res) => {
+const obtenerUsuario = async (req, res) => {
   const { id } = req.params;
-  const usuario = users.find(u => u.id === parseInt(id));
-  if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado.' });
-  res.status(200).json(usuario);
+  try {
+    const result = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    return res.status(200).json(result.rows[0]);
+  } catch (err) {
+    return res.status(500).json({ message: 'Error obteniendo usuario', error: err.message });
+  }
 };
 
 // Editar usuario
-const editarUsuario = (req, res) => {
+const editarUsuario = async (req, res) => {
   const { id } = req.params;
   const { nombre, password, telefono, pais, ciudad, edad } = req.body;
-  const usuario = users.find(u => u.id === parseInt(id));
-  if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado.' });
-  if (nombre) usuario.nombre = nombre;
-  if (password) usuario.password = password;
-  if (telefono) usuario.telefono = telefono;
-  if (pais) usuario.pais = pais;
-  if (ciudad) usuario.ciudad = ciudad;
-  if (edad) usuario.edad = edad;
-  res.status(200).json({ message: 'Usuario actualizado correctamente.', usuario });
+  try {
+    const result = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+
+    const user = result.rows[0];
+
+    const updateUser = {
+      nombre: nombre || user.nombre,
+      password: password || user.password,
+      telefono: telefono || user.telefono,
+      pais: pais || user.pais,
+      ciudad: ciudad || user.ciudad,
+      edad: edad || user.edad,
+    };
+
+    await pool.query(
+      `UPDATE usuarios SET nombre = $1, password = $2, telefono = $3, pais = $4, ciudad = $5, edad = $6 WHERE id = $7`,
+      [updateUser.nombre, updateUser.password, updateUser.telefono, updateUser.pais, updateUser.ciudad, updateUser.edad, id]
+    );
+
+    return res.status(200).json({ message: 'Usuario actualizado correctamente.', usuario: { id: Number(id), ...updateUser } });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error actualizando usuario', error: err.message });
+  }
 };
 
 // Eliminar usuario
-const eliminarUsuario = (req, res) => {
+const eliminarUsuario = async (req, res) => {
   const { id } = req.params;
-  const idx = users.findIndex(u => u.id === parseInt(id));
-  if (idx === -1) return res.status(404).json({ message: 'Usuario no encontrado.' });
-  users.splice(idx, 1);
-  res.status(200).json({ message: 'Usuario eliminado correctamente.' });
+  try {
+    const result = await pool.query('DELETE FROM usuarios WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    return res.status(200).json({ message: 'Usuario eliminado correctamente.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error eliminando usuario', error: err.message });
+  }
 };
 
-/**
- * Recuperar contraseña - Simula envío de correo devolviendo el token por respuesta
- * POST /api/usuarios/recuperar-password
- */
-const recuperarPassword = (req, res) => {
+// Recuperar contraseña (simulado)
+const recuperarPassword = async (req, res) => {
   const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ message: 'Email es obligatorio.' });
+  if (!email) return res.status(400).json({ message: 'Email es obligatorio.' });
+
+  try {
+    const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    // Responde igual para no revelar existencia
+    if (result.rows.length === 0) {
+      return res.status(200).json({ message: 'Si el usuario existe, se ha enviado un correo de recuperación (simulado).' });
+    }
+
+    // Genera token temporal (NO se guarda en DB por simplicidad aquí)
+    const token = crypto.randomBytes(20).toString('hex');
+    // En un sistema real deberías guardar el token y expiración en la tabla usuarios o tabla tokens
+    // Aquí lo devolvemos solo para pruebas
+    return res.status(200).json({
+      message: 'Si el usuario existe, se ha enviado un correo de recuperación (simulado).',
+      resetToken: token,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error en la recuperación', error: err.message });
   }
-  const usuario = users.find(u => u.email === email);
-  // Responde igual para no revelar existencia
-  if (!usuario) {
-    return res.status(200).json({ message: 'Si el usuario existe, se ha enviado un correo de recuperación (simulado).' });
-  }
-  // Genera token temporal y expiración (15 minutos)
-  const token = crypto.randomBytes(20).toString('hex');
-  usuario.resetToken = token;
-  usuario.resetTokenExp = Date.now() + 15 * 60 * 1000;
-  // En un sistema real, aquí enviarías el correo
-  res.status(200).json({
-    message: 'Si el usuario existe, se ha enviado un correo de recuperación (simulado).',
-    resetToken: token // Solo para pruebas, en real nunca lo devuelvas así
-  });
 };
 
-/**
- * Restablecer contraseña usando token temporal
- * POST /api/usuarios/reset-password
- */
-const resetPassword = (req, res) => {
-  const { token, nuevaPassword } = req.body;
-  if (!token || !nuevaPassword) {
-    return res.status(400).json({ message: 'Token y nueva contraseña son obligatorios.' });
+// Restablecer contraseña usando token (simulado)
+const resetPassword = async (req, res) => {
+  // Como no guardamos el token, simulamos el flujo
+  const { token, nuevaPassword, email } = req.body;
+  if (!token || !nuevaPassword || !email) {
+    return res.status(400).json({ message: 'Token, email y nueva contraseña son obligatorios.' });
   }
-  const usuario = users.find(u => u.resetToken === token && u.resetTokenExp > Date.now());
-  if (!usuario) {
-    return res.status(400).json({ message: 'Token inválido o expirado.' });
+  // Busca el usuario por email
+  try {
+    const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+
+    await pool.query('UPDATE usuarios SET password = $1 WHERE email = $2', [nuevaPassword, email]);
+    return res.status(200).json({ message: 'Contraseña restablecida correctamente.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error restableciendo contraseña', error: err.message });
   }
-  usuario.password = nuevaPassword;
-  delete usuario.resetToken;
-  delete usuario.resetTokenExp;
-  res.status(200).json({ message: 'Contraseña restablecida correctamente.' });
 };
 
-/**
- * FILTRO AVANZADO: Listar cursos por usuario (profesor o alumno)
- * GET /api/usuarios/:id/cursos
- *  - Si es profesor: cursos que creó
- *  - Si es alumno: cursos donde está inscrito
- */
-const listarCursosPorUsuario = (req, res) => {
+// Listar cursos por usuario (profesor o alumno)
+const listarCursosPorUsuario = async (req, res) => {
   const { id } = req.params;
-  const usuario = users.find(u => u.id === parseInt(id));
-  if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado.' });
+  try {
+    const userResult = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+    if (userResult.rows.length === 0)
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
 
-  if (usuario.rol === 'profesor') {
-    // Retorna cursos creados por el profesor
-    const cursosCreados = cursos.filter(c => c.profesorId === usuario.id);
-    return res.status(200).json(cursosCreados);
-  } else if (usuario.rol === 'alumno') {
-    // Retorna cursos donde está inscrito
-    const cursosInscrito = cursos.filter(c => c.alumnos && c.alumnos.includes(usuario.id));
-    return res.status(200).json(cursosInscrito);
-  } else {
-    return res.status(400).json({ message: 'Rol de usuario inválido.' });
+    const usuario = userResult.rows[0];
+    if (usuario.rol === 'profesor') {
+      // Cursos creados por profesor
+      const result = await pool.query('SELECT * FROM cursos WHERE profesor_id = $1', [usuario.id]);
+      return res.status(200).json(result.rows);
+    } else if (usuario.rol === 'alumno') {
+      // Cursos donde está inscrito (relación cursos_alumnos)
+      const result = await pool.query(`
+        SELECT c.*
+        FROM cursos_alumnos ca
+        JOIN cursos c ON ca.curso_id = c.id
+        WHERE ca.alumno_id = $1
+      `, [usuario.id]);
+      return res.status(200).json(result.rows);
+    } else {
+      return res.status(400).json({ message: 'Rol de usuario inválido.' });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: 'Error listando cursos por usuario', error: err.message });
   }
 };
 
-/**
- * FILTRO AVANZADO: Listar clases por usuario/alumno
- * GET /api/usuarios/:id/clases
- *  - Retorna clases donde está inscrito (participantes)
- */
-const listarClasesPorUsuario = (req, res) => {
+// Listar clases por usuario/alumno
+const listarClasesPorUsuario = async (req, res) => {
   const { id } = req.params;
-  const usuario = users.find(u => u.id === parseInt(id));
-  if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado.' });
+  try {
+    const userResult = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+    if (userResult.rows.length === 0)
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
 
-  const clasesInscrito = clases.filter(cl => cl.participantes && cl.participantes.includes(usuario.id));
-  return res.status(200).json(clasesInscrito);
+    // Clases donde está inscrito (relación clases_participantes)
+    const result = await pool.query(`
+      SELECT cl.*
+      FROM clases_participantes cp
+      JOIN clases cl ON cp.clase_id = cl.id
+      WHERE cp.participante_id = $1
+    `, [id]);
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ message: 'Error listando clases por usuario', error: err.message });
+  }
 };
 
 module.exports = {
@@ -178,10 +220,6 @@ module.exports = {
   eliminarUsuario,
   recuperarPassword,
   resetPassword,
-  listarCursosPorUsuario,  // <-- NUEVO
-  listarClasesPorUsuario,  // <-- NUEVO
-  users
+  listarCursosPorUsuario,
+  listarClasesPorUsuario,
 };
-
-
-
