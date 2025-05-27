@@ -1,6 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser } = require('../controllers/userController');
+const {
+  registerUser,
+  listarUsuarios,
+  obtenerUsuario,
+  editarUsuario,
+  eliminarUsuario
+} = require('../controllers/userController');
 
 /**
  * @swagger
@@ -61,8 +67,99 @@ const { registerUser } = require('../controllers/userController');
  *       409:
  *         description: El email ya está registrado
  */
+
+/**
+ * @swagger
+ * /api/usuarios:
+ *   get:
+ *     summary: Listar todos los usuarios o filtrar por rol
+ *     tags:
+ *       - Usuarios
+ *     parameters:
+ *       - name: rol
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filtrar por rol (profesor o alumno)
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios
+ */
+
+/**
+ * @swagger
+ * /api/usuarios/{id}:
+ *   get:
+ *     summary: Obtener detalles de usuario por id
+ *     tags:
+ *       - Usuarios
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Usuario encontrado
+ *       404:
+ *         description: Usuario no encontrado
+ *   put:
+ *     summary: Editar un usuario por id
+ *     tags:
+ *       - Usuarios
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               telefono:
+ *                 type: string
+ *               pais:
+ *                 type: string
+ *               ciudad:
+ *                 type: string
+ *               edad:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado correctamente
+ *       404:
+ *         description: Usuario no encontrado
+ *   delete:
+ *     summary: Eliminar usuario por id
+ *     tags:
+ *       - Usuarios
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Usuario eliminado correctamente
+ *       404:
+ *         description: Usuario no encontrado
+ */
+
 router.post('/registro', registerUser);
+router.get('/', listarUsuarios);
+router.get('/:id', obtenerUsuario);
+router.put('/:id', editarUsuario);
+router.delete('/:id', eliminarUsuario);
 
 module.exports = router;
-
-

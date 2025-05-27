@@ -36,8 +36,14 @@ app.get('/', (req, res) => {
   res.send('API funcionando!');
 });
 
+const claseRoutes = require('./routes/claseRoutes');
+app.use('/api/clases', claseRoutes);
+
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
+
+const cursoRoutes = require('./routes/cursoRoutes');
+app.use('/api/cursos', cursoRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
