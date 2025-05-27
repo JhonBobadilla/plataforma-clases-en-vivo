@@ -6,6 +6,7 @@ const {
   listarClases,
   obtenerClase,
   inscribirParticipante,
+  desinscribirParticipante,  // <-- Agregado para desinscripción
   editarClase,
   eliminarClase
 } = require('../controllers/claseController');
@@ -164,6 +165,42 @@ const {
  *         description: El usuario ya está inscrito
  */
 
+/**
+ * @swagger
+ * /api/clases/{id}/inscribir:
+ *   delete:
+ *     summary: Desinscribir participante (alumno/asistente) de una clase/reunión
+ *     tags:
+ *       - Clases
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - alumnoId
+ *             properties:
+ *               alumnoId:
+ *                 type: integer
+ *                 example: 2
+ *     responses:
+ *       200:
+ *         description: Participante desinscrito correctamente
+ *       400:
+ *         description: El alumno no está inscrito en esta clase
+ *       404:
+ *         description: Clase/reunión no encontrada
+ */
+
 // SOLO profesor puede crear clase
 router.post('/', verificarToken, requireRole('profesor'), crearClase);
 // Todos autenticados pueden listar
@@ -176,5 +213,9 @@ router.put('/:id', verificarToken, requireRole('profesor'), editarClase);
 router.delete('/:id', verificarToken, requireRole('profesor'), eliminarClase);
 // SOLO alumno puede inscribirse
 router.post('/:id/inscribir', verificarToken, requireRole('alumno'), inscribirParticipante);
+// SOLO alumno puede desinscribirse
+router.delete('/:id/inscribir', verificarToken, requireRole('alumno'), desinscribirParticipante);
 
 module.exports = router;
+
+

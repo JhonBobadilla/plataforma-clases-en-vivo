@@ -13,7 +13,7 @@ const router = express.Router();
  *       200:
  *         description: API funcionando correctamente
  */
-router.get('/health', (req, res) => {
+router.get('/', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'API funcionando correctamente' });
 });
 

@@ -11,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Swagger config
+// Configuración de Swagger
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
@@ -29,7 +29,7 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Carga de rutas
-app.use('/api', healthRoutes);
+app.use('/api/health', healthRoutes); // Ruta base para health
 app.use('/api/usuarios', userRoutes);
 
 app.get('/', (req, res) => {
@@ -49,5 +49,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
-
 

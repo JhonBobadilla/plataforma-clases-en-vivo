@@ -1,7 +1,6 @@
 const Clase = require('../models/Clase');
 const { clases, cursos } = require('../data/memoria');
 
-
 // Crear clase/reunión (requiere cursoId válido)
 const crearClase = (req, res) => {
   const { titulo, descripcion, fecha, hora, profesorId, cursoId } = req.body;
@@ -15,6 +14,7 @@ const crearClase = (req, res) => {
   }
   const id = clases.length + 1;
   const nuevaClase = new Clase({ id, titulo, descripcion, fecha, hora, profesorId, cursoId });
+  nuevaClase.participantes = [];
   clases.push(nuevaClase);
   res.status(201).json({
     message: 'Clase/reunión creada correctamente',
@@ -53,11 +53,30 @@ const inscribirParticipante = (req, res) => {
   if (!alumnoId) {
     return res.status(400).json({ message: 'alumnoId es obligatorio.' });
   }
+  if (!clase.participantes) clase.participantes = [];
   if (clase.participantes.includes(alumnoId)) {
     return res.status(409).json({ message: 'El usuario ya está inscrito.' });
   }
   clase.participantes.push(alumnoId);
   res.status(200).json({ message: 'Participante inscrito correctamente.', clase });
+};
+
+// DESINSCRIBIR participante de clase/reunión
+const desinscribirParticipante = (req, res) => {
+  const { id } = req.params;
+  const { alumnoId } = req.body;
+  const clase = clases.find(c => c.id === parseInt(id));
+  if (!clase) {
+    return res.status(404).json({ message: 'Clase/reunión no encontrada.' });
+  }
+  if (!alumnoId) {
+    return res.status(400).json({ message: 'alumnoId es obligatorio.' });
+  }
+  if (!clase.participantes || !clase.participantes.includes(alumnoId)) {
+    return res.status(400).json({ message: 'El alumno no está inscrito en esta clase.' });
+  }
+  clase.participantes = clase.participantes.filter(pid => pid !== alumnoId);
+  res.status(200).json({ message: 'Participante desinscrito correctamente.', clase });
 };
 
 // Editar clase/reunión
@@ -87,7 +106,9 @@ module.exports = {
   listarClases,
   obtenerClase,
   inscribirParticipante,
+  desinscribirParticipante,  // <-- NUEVO
   editarClase,
   eliminarClase,
   clases
 };
+

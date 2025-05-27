@@ -5,7 +5,11 @@ const {
   listarUsuarios,
   obtenerUsuario,
   editarUsuario,
-  eliminarUsuario
+  eliminarUsuario,
+  recuperarPassword,
+  resetPassword,
+  listarCursosPorUsuario,   // <--- NUEVO
+  listarClasesPorUsuario    // <--- NUEVO
 } = require('../controllers/userController');
 
 /**
@@ -44,9 +48,7 @@ const {
  *                 type: string
  *                 enum: [profesor, alumno]
  *                 example: profesor
- *                 description: >-
- *                   Use "profesor" para profesor/organizador
- *                   o "alumno" para alumno/interlocutor/asistente.
+ *                 description: "Use 'profesor' para profesor/organizador o 'alumno' para alumno/interlocutor/asistente."
  *               telefono:
  *                 type: string
  *                 example: "+573001234567"
@@ -63,7 +65,7 @@ const {
  *       201:
  *         description: Usuario registrado correctamente
  *       400:
- *         description: Faltan datos obligatorios o datos inválidos. El rol debe ser "profesor/organizador" o "alumno/interlocutor".
+ *         description: Faltan datos obligatorios o datos inválidos. El rol debe ser 'profesor' o 'alumno'.
  *       409:
  *         description: El email ya está registrado
  */
@@ -81,7 +83,7 @@ const {
  *         required: false
  *         schema:
  *           type: string
- *         description: Filtrar por rol (profesor o alumno)
+ *         description: Filtrar por rol ('profesor' o 'alumno')
  *     responses:
  *       200:
  *         description: Lista de usuarios
@@ -156,10 +158,115 @@ const {
  *         description: Usuario no encontrado
  */
 
+/**
+ * @swagger
+ * /api/usuarios/recuperar-password:
+ *   post:
+ *     summary: Solicitar recuperación de contraseña (simulado, devuelve el token)
+ *     tags:
+ *       - Usuarios
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: juan@correo.com
+ *     responses:
+ *       200:
+ *         description: Si el usuario existe, se ha enviado un correo de recuperación (simulado).
+ *       400:
+ *         description: Email es obligatorio
+ */
+
+/**
+ * @swagger
+ * /api/usuarios/reset-password:
+ *   post:
+ *     summary: Restablecer la contraseña usando token temporal
+ *     tags:
+ *       - Usuarios
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - nuevaPassword
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "f1f2f3f4abcd..."
+ *               nuevaPassword:
+ *                 type: string
+ *                 example: "nuevaClave123"
+ *     responses:
+ *       200:
+ *         description: Contraseña restablecida correctamente
+ *       400:
+ *         description: Token inválido o expirado
+ */
+
+/**
+ * @swagger
+ * /api/usuarios/{id}/cursos:
+ *   get:
+ *     summary: Listar cursos de un usuario (profesor = creados, alumno = inscritos)
+ *     tags:
+ *       - Usuarios
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de cursos del usuario
+ *       404:
+ *         description: Usuario no encontrado
+ */
+
+/**
+ * @swagger
+ * /api/usuarios/{id}/clases:
+ *   get:
+ *     summary: Listar clases donde el usuario/alumno está inscrito
+ *     tags:
+ *       - Usuarios
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de clases del usuario/alumno
+ *       404:
+ *         description: Usuario no encontrado
+ */
+
+// Endpoints principales
 router.post('/registro', registerUser);
 router.get('/', listarUsuarios);
 router.get('/:id', obtenerUsuario);
 router.put('/:id', editarUsuario);
 router.delete('/:id', eliminarUsuario);
+
+// Recuperación y reset de contraseña
+router.post('/recuperar-password', recuperarPassword);
+router.post('/reset-password', resetPassword);
+
+// Filtros avanzados
+router.get('/:id/cursos', listarCursosPorUsuario);
+router.get('/:id/clases', listarClasesPorUsuario);
 
 module.exports = router;

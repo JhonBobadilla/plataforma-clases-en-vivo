@@ -1,7 +1,6 @@
 const Curso = require('../models/Curso');
 const { cursos, clases } = require('../data/memoria');
 
-
 // Crear curso
 const crearCurso = (req, res) => {
   const { nombre, descripcion, profesorId } = req.body;
@@ -52,6 +51,24 @@ const inscribirAlumno = (req, res) => {
   res.status(200).json({ message: 'Alumno inscrito correctamente en el curso.', curso });
 };
 
+// ** Nuevo: Desinscribir alumno de curso **
+const desinscribirAlumno = (req, res) => {
+  const { id } = req.params;
+  const { alumnoId } = req.body;
+  const curso = cursos.find(c => c.id === parseInt(id));
+  if (!curso) {
+    return res.status(404).json({ message: 'Curso no encontrado.' });
+  }
+  if (!alumnoId) {
+    return res.status(400).json({ message: 'alumnoId es obligatorio.' });
+  }
+  if (!curso.alumnos || !curso.alumnos.includes(alumnoId)) {
+    return res.status(404).json({ message: 'El alumno no está inscrito en el curso.' });
+  }
+  curso.alumnos = curso.alumnos.filter(a => a !== alumnoId);
+  res.status(200).json({ message: 'Alumno desinscrito correctamente del curso.', curso });
+};
+
 // Editar curso
 const editarCurso = (req, res) => {
   const { id } = req.params;
@@ -72,7 +89,7 @@ const eliminarCurso = (req, res) => {
   res.status(200).json({ message: 'Curso eliminado correctamente.' });
 };
 
-// Listar todas las clases de un curso
+// Listar clases de un curso
 const listarClasesDeCurso = (req, res) => {
   const { id } = req.params;
   const clasesCurso = clases.filter(c => c.cursoId === parseInt(id));
@@ -84,8 +101,11 @@ module.exports = {
   listarCursos,
   obtenerCurso,
   inscribirAlumno,
+  desinscribirAlumno, // <--- nuevo export
   editarCurso,
   eliminarCurso,
   listarClasesDeCurso,
   cursos
 };
+
+
