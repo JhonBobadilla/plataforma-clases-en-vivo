@@ -1,0 +1,36 @@
+function SidebarProfesor({ setSeccion }) {
+  return (
+    <div className="w-64 bg-indigo-700 text-white flex flex-col">
+      <div className="p-4 text-center text-2xl font-bold border-b border-indigo-500">
+        Panel Organizador
+      </div>
+
+      <nav className="flex-1 p-4">
+        <ul className="space-y-4">
+          <li>
+            <button
+              onClick={() => setSeccion("cursos")}
+              className="w-full text-left hover:bg-indigo-600 p-2 rounded"
+            >
+              📘 Mis Cursos
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => setSeccion("clases")}
+              className="w-full text-left hover:bg-indigo-600 p-2 rounded"
+            >
+              📗 Mis Clases
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div className="p-4 border-t border-indigo-500 text-sm text-center">
+        © 2025 Plataforma
+      </div>
+    </div>
+  );
+}
+
+export default SidebarProfesor;
