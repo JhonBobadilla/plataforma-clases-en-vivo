@@ -53,7 +53,6 @@ function CrearClase({ cursoId, profesorId, onClaseCreada }) {
     <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded border mt-4">
       <h5 className="font-bold mb-2 text-sm">➕ Crear nueva clase</h5>
       {mensaje && <p className="text-sm mb-2 text-center">{mensaje}</p>}
-
       <input
         type="text"
         placeholder="Título"
@@ -62,7 +61,6 @@ function CrearClase({ cursoId, profesorId, onClaseCreada }) {
         className="w-full mb-2 p-2 border rounded text-sm"
         required
       />
-
       <textarea
         placeholder="Descripción"
         value={descripcion}
@@ -70,7 +68,6 @@ function CrearClase({ cursoId, profesorId, onClaseCreada }) {
         className="w-full mb-2 p-2 border rounded text-sm"
         required
       />
-
       <input
         type="date"
         value={fecha}
@@ -85,7 +82,6 @@ function CrearClase({ cursoId, profesorId, onClaseCreada }) {
         className="w-full mb-2 p-2 border rounded text-sm"
         required
       />
-
       <button
         type="submit"
         className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-bold"

@@ -63,7 +63,7 @@ function CrearCurso({ user, onCursoCreado }) {
 
       <button
         type="submit"
-        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded font-bold"
+        className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-bold"
       >
         Crear curso
       </button>
