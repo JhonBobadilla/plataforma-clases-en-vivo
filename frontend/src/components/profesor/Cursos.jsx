@@ -262,6 +262,15 @@ function Cursos({ user }) {
                       >
                         Eliminar
                       </button>
+                      {/* Aquí agrego el botón para entrar a la clase */}
+                      <a
+                        href={clase.url || "#"} // Reemplaza "url" con el nombre correcto del campo del enlace
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 mt-3 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm"
+                      >
+                        Entrar a la clase
+                      </a>
                       {editandoClaseId === clase.id && (
                         <form
                           onSubmit={(e) => {
@@ -344,3 +353,5 @@ function Cursos({ user }) {
 }
 
 export default Cursos;
+
+

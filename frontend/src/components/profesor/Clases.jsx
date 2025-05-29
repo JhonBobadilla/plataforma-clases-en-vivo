@@ -23,7 +23,6 @@ function Clases({ user }) {
 
         // ORDENAR por fecha + hora
         const ordenadas = filtradas.sort((a, b) => {
-          // Saca solo la fecha yyyy-mm-dd de a.fecha y suma la hora
           const dateA = new Date(a.fecha.split('T')[0] + 'T' + a.hora);
           const dateB = new Date(b.fecha.split('T')[0] + 'T' + b.hora);
           return dateA - dateB;
@@ -54,6 +53,15 @@ function Clases({ user }) {
             <p className="text-sm text-gray-500">
               {clase.fecha} – {clase.hora}
             </p>
+            {/* Botón Entrar a la clase */}
+            <a
+              href={clase.url || "#"} // Cambia 'url' por el nombre real del campo con el enlace
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            >
+              Entrar a la clase
+            </a>
           </div>
         ))}
       </div>
@@ -62,5 +70,6 @@ function Clases({ user }) {
 }
 
 export default Clases;
+
 
 
