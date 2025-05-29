@@ -91,7 +91,8 @@ const inscribirParticipante = async (req, res) => {
 // DESINSCRIBIR participante de clase/reunión
 const desinscribirParticipante = async (req, res) => {
   const { id } = req.params; // id de la clase
-  const { alumnoId } = req.body;
+  // 👇 NUEVA línea tolerante (no revienta si body es undefined)
+  const alumnoId = (req.body && req.body.alumnoId) || req.query.alumnoId;
   if (!alumnoId) {
     return res.status(400).json({ message: 'alumnoId es obligatorio.' });
   }
@@ -168,5 +169,6 @@ module.exports = {
   editarClase,
   eliminarClase,
 };
+
 
 

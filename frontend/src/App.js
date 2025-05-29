@@ -3,28 +3,16 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import DashboardProfesor from "./components/DashboardProfesor";
-
-function DashboardAlumno({ user, onLogout }) {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-green-500">
-      <h1 className="text-4xl font-bold mb-4">
-        Bienvenido, {user.nombre || user.email}!
-      </h1>
-      <button
-        className="px-4 py-2 bg-red-500 text-white rounded font-bold"
-        onClick={() => {
-          localStorage.removeItem("token");
-          onLogout();
-        }}
-      >
-        Cerrar sesión
-      </button>
-    </div>
-  );
-}
+import DashboardAlumno from "./components/DashboardAlumno"; // <-- Importa el nuevo dashboard
 
 function App() {
   const [user, setUser] = useState(null);
+
+  // Función de logout (puedes moverla a donde prefieras)
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+  };
 
   return (
     <Router>
@@ -51,19 +39,19 @@ function App() {
           path="/dashboard-profesor"
           element={
             user && user.rol === "profesor" ? (
-              <DashboardProfesor user={user} />
+              <DashboardProfesor user={user} onLogout={handleLogout} />
             ) : (
               <Navigate to="/" />
             )
           }
         />
 
-        {/* Panel Alumno provisional */}
+        {/* Panel Alumno (real, con sidebar, cursos y clases) */}
         <Route
           path="/dashboard-alumno"
           element={
             user && user.rol === "alumno" ? (
-              <DashboardAlumno user={user} onLogout={() => setUser(null)} />
+              <DashboardAlumno user={user} onLogout={handleLogout} />
             ) : (
               <Navigate to="/" />
             )
@@ -75,4 +63,3 @@ function App() {
 }
 
 export default App;
-
