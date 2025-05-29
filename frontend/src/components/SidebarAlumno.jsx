@@ -24,6 +24,14 @@ function SidebarAlumno({ setSeccion }) {
           </li>
           <li>
             <button
+              onClick={() => setSeccion("proximas_clases")}
+              className="w-full text-left hover:bg-indigo-600 p-2 rounded"
+            >
+              🗓️ Próximas Clases
+            </button>
+          </li>
+          <li>
+            <button
               onClick={() => setSeccion("panel_control")}
               className="w-full text-left hover:bg-indigo-600 p-2 rounded"
             >
@@ -40,5 +48,6 @@ function SidebarAlumno({ setSeccion }) {
 }
 
 export default SidebarAlumno;
+
 
 

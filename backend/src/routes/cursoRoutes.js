@@ -10,7 +10,8 @@ const {
   desinscribirAlumno, 
   editarCurso,
   eliminarCurso,
-  listarClasesDeCurso
+  listarClasesDeCurso,
+  getCursosInscritos//AGREGADO PARA LISTAR CURSOS ALUMNO******
 } = require('../controllers/cursoController');
 
 /**
@@ -248,6 +249,10 @@ router.delete('/:id/inscribir', verificarToken, requireRole('alumno'), desinscri
 
 // Listar y ver detalles: solo autenticado (puedes hacerlos públicos si quieres)
 router.get('/', verificarToken, listarCursos);
+
+//YO AGREGUÉ ESTO PARA QUE LOS ALUMNOS PUEDAN VER SUS CURSOS
+router.get('/inscritos', verificarToken, requireRole("alumno"), getCursosInscritos);
+
 router.get('/:id', verificarToken, obtenerCurso);
 router.get('/:id/clases', verificarToken, listarClasesDeCurso);
 

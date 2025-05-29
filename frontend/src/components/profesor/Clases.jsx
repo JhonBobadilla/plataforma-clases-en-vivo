@@ -15,11 +15,21 @@ function Clases({ user }) {
             Authorization: `Bearer ${token}`,
           },
         });
+
         // Solo clases del profesor
         const filtradas = res.data.filter(
           (clase) => clase.profesor_id === user.id
         );
-        setClases(filtradas);
+
+        // ORDENAR por fecha + hora
+        const ordenadas = filtradas.sort((a, b) => {
+          // Saca solo la fecha yyyy-mm-dd de a.fecha y suma la hora
+          const dateA = new Date(a.fecha.split('T')[0] + 'T' + a.hora);
+          const dateB = new Date(b.fecha.split('T')[0] + 'T' + b.hora);
+          return dateA - dateB;
+        });
+
+        setClases(ordenadas);
       } catch (err) {
         setError("Error al cargar las clases.");
       }
@@ -30,7 +40,7 @@ function Clases({ user }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">📗 Mis Clases</h2>
+      <h2 className="text-2xl font-bold mb-4">📅 Próximas Clases</h2>
       {error && <p className="text-red-600">{error}</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -52,3 +62,5 @@ function Clases({ user }) {
 }
 
 export default Clases;
+
+

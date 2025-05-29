@@ -163,6 +163,29 @@ const listarClasesDeCurso = async (req, res) => {
   }
 };
 
+
+//AGREGADO PARA LISTAR CURSOS ALUMNO*****.
+// Obtener cursos a los que el alumno está inscrito
+const getCursosInscritos = async (req, res) => {
+  try {
+    // Usa el id del usuario autenticado
+    const alumnoId = req.user.id;
+
+    // Busca todos los cursos donde el alumno está inscrito
+    const result = await pool.query(
+      `SELECT c.* 
+         FROM cursos c
+         JOIN cursos_alumnos ca ON ca.curso_id = c.id
+        WHERE ca.alumno_id = $1`,
+      [alumnoId]
+    );
+
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ message: 'Error obteniendo cursos inscritos', error: err.message });
+  }
+};
+
 module.exports = {
   crearCurso,
   listarCursos,
@@ -172,6 +195,8 @@ module.exports = {
   editarCurso,
   eliminarCurso,
   listarClasesDeCurso,
+  //****** AGREGADO PARA LISTAR CURSOS ALUMNO*****.
+  getCursosInscritos,
 };
 
 

@@ -2,7 +2,8 @@ import { useState } from "react";
 import SidebarAlumno from "./SidebarAlumno";
 import PanelControlAlumno from "./alumno/PanelControlAlumno";
 import MisCursosAlumno from "./alumno/MisCursosAlumno";
-import CursosDisponiblesAlumno from "./alumno/CursosDisponiblesAlumno"; // <-- Nuevo componente
+import CursosDisponiblesAlumno from "./alumno/CursosDisponiblesAlumno";
+import MisClasesAlumno from "./alumno/MisClasesAlumno"; 
 
 function DashboardAlumno({ user, onLogout }) {
   const [seccion, setSeccion] = useState("mis_cursos");
@@ -23,10 +24,14 @@ function DashboardAlumno({ user, onLogout }) {
         {seccion === "panel_control" && (
           <PanelControlAlumno user={user} onLogout={onLogout} />
         )}
+        {seccion === "proximas_clases" && (      
+          <MisClasesAlumno user={user} />
+        )}
       </div>
     </div>
   );
 }
 
 export default DashboardAlumno;
+
 
