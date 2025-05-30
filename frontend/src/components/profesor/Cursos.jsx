@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import CrearCurso from "./CrearCurso";
 import CrearClase from "./CrearClase";
+import { Link } from "react-router-dom"; // <-- AGREGA ESTO
 
 function Cursos({ user }) {
   const [cursos, setCursos] = useState([]);
@@ -262,15 +263,15 @@ function Cursos({ user }) {
                       >
                         Eliminar
                       </button>
-                      {/* Aquí agrego el botón para entrar a la clase */}
-                      <a
-                        href={clase.url || "#"} // Reemplaza "url" con el nombre correcto del campo del enlace
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      {/* Cambia aquí el botón para abrir la videollamada dentro de la app */}
+                      <Link
+                        to={`/videollamada/${encodeURIComponent(
+                          (clase.titulo.replace(/\s+/g, "") + "-" + clase.id)
+                        )}`}
                         className="ml-2 mt-3 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm"
                       >
                         Entrar a la clase
-                      </a>
+                      </Link>
                       {editandoClaseId === clase.id && (
                         <form
                           onSubmit={(e) => {
@@ -353,5 +354,3 @@ function Cursos({ user }) {
 }
 
 export default Cursos;
-
-

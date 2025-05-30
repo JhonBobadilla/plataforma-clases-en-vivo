@@ -14,12 +14,12 @@ function CursosDisponiblesAlumno({ user }) {
     if (!user || !user.id) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/cursos`,
+        `http://192.168.1.10:3000/api/cursos`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       // Filtra para mostrar solo los que NO está inscrito (asume que user.cursosInscritos o hay que consultar)
       const resCursosInscritos = await axios.get(
-        `http://localhost:3000/api/usuarios/${user.id}/cursos`,
+        `http://192.168.1.10:3000/api/usuarios/${user.id}/cursos`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const idsInscritos = new Set(resCursosInscritos.data.map(c => c.id));

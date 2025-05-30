@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import DashboardProfesor from "./components/DashboardProfesor";
-import DashboardAlumno from "./components/DashboardAlumno"; // <-- Importa el nuevo dashboard
+import DashboardAlumno from "./components/DashboardAlumno";
+import VideollamadaClase from "./pages/VideollamadaClase"; // <-- Importa la nueva página de videollamada
 
 function App() {
   const [user, setUser] = useState(null);
@@ -52,6 +53,18 @@ function App() {
           element={
             user && user.rol === "alumno" ? (
               <DashboardAlumno user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+
+        {/* Videollamada de clase - Jitsi */}
+        <Route
+          path="/videollamada/:room"
+          element={
+            user ? (
+              <VideollamadaClase user={user} />
             ) : (
               <Navigate to="/" />
             )

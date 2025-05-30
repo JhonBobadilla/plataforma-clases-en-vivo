@@ -11,7 +11,7 @@ function MisClasesAlumno({ user }) {
     const fetchClasesAlumno = async () => {
       try {
         // 1. Trae los cursos a los que el alumno está inscrito
-        const cursosRes = await axios.get("http://localhost:3000/api/cursos/inscritos", {
+        const cursosRes = await axios.get("http://192.168.1.10:3000/api/cursos/inscritos", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const cursosIds = cursosRes.data.map((curso) => Number(curso.id));
@@ -19,7 +19,7 @@ function MisClasesAlumno({ user }) {
         console.log("IDs de cursos:", cursosIds);
 
         // 2. Trae todas las clases
-        const clasesRes = await axios.get("http://localhost:3000/api/clases", {
+        const clasesRes = await axios.get("http://192.168.1.10:3000/api/clases", {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("Todas las clases:", clasesRes.data);

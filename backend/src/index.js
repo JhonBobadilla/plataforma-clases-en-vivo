@@ -1,3 +1,5 @@
+require('dotenv').config(); // <--- IMPORTANTE, DEBE IR ARRIBA DE TODO
+
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
@@ -55,6 +57,9 @@ app.use('/api/cursos', cursoRoutes);
 app.get('/', (req, res) => {
   res.send('API funcionando!');
 });
+
+const livekitRoutes = require('./routes/livekit');
+app.use('/api/livekit', livekitRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -10,7 +10,7 @@ const loginUser = async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({ message: 'Email y password son obligatorios.' });
   }
-
+console.log('Intentando login para:', email);
   try {
     // Busca el usuario en la base de datos
     const result = await pool.query(
@@ -55,8 +55,9 @@ const loginUser = async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('LOGIN ERROR:', err); 
     return res.status(500).json({ message: 'Error en el login', error: err.message });
-  }
+}
 };
 
 module.exports = { loginUser };

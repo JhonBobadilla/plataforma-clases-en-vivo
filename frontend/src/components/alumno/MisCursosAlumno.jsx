@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom"; // <-- Importa Link
 
 function MisCursosAlumno({ user }) {
   const [cursos, setCursos] = useState([]);
@@ -16,7 +17,7 @@ function MisCursosAlumno({ user }) {
     if (!user || !user.id) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/usuarios/${user.id}/cursos`,
+        `http://192.168.1.10:3000/api/usuarios/${user.id}/cursos`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -31,7 +32,7 @@ function MisCursosAlumno({ user }) {
   const fetchClasesPorCurso = async (cursoId) => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/cursos/${cursoId}/clases`,
+        `http://192.168.1.10:3000/api/cursos/${cursoId}/clases`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -46,13 +47,13 @@ function MisCursosAlumno({ user }) {
     }
   };
 
-  // Elimina inscripción del alumno al curso (nuevo endpoint correcto)
+  // Elimina inscripción del alumno al curso
   const handleDesinscribirme = async (cursoId) => {
     setMensaje("");
     if (!window.confirm("¿Seguro que deseas desinscribirte de este curso?")) return;
     try {
       await axios.delete(
-        `http://localhost:3000/api/cursos/${cursoId}/inscribir`,
+        `http://192.168.1.10:3000/api/cursos/${cursoId}/inscribir`,
         {
           headers: { Authorization: `Bearer ${token}` },
           data: { alumnoId: user.id },
@@ -70,11 +71,6 @@ function MisCursosAlumno({ user }) {
     fetchCursos();
     // eslint-disable-next-line
   }, [user]);
-
-  // Maneja la acción de entrar a clase
-  const handleEntrarClase = (claseId) => {
-    window.location.href = `/clase/${claseId}`;
-  };
 
   return (
     <div className="p-4">
@@ -131,12 +127,15 @@ function MisCursosAlumno({ user }) {
                           </span>
                         </div>
                         <div className="text-xs text-gray-500 mb-1">{clase.descripcion}</div>
-                        <button
-                          onClick={() => handleEntrarClase(clase.id)}
+                        {/* BOTÓN CORREGIDO: */}
+                        <Link
+                          to={`/videollamada/${encodeURIComponent(
+                            (clase.titulo.replace(/\s+/g, "") + "-" + clase.id)
+                          )}`}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs mt-1"
                         >
                           Entrar a clase
-                        </button>
+                        </Link>
                       </li>
                     ))
                   )}
