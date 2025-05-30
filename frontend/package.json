@@ -3,7 +3,9 @@
     "@livekit/components-react": "^2.9.9",
     "@livekit/components-styles": "^1.1.6",
     "axios": "^1.9.0",
+    "konva": "^9.3.20",
     "livekit-client": "^2.13.3",
+    "react-konva": "^19.0.4",
     "react-router-dom": "^7.6.1",
     "react-scripts": "^5.0.1"
   },

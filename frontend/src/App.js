@@ -4,12 +4,13 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import DashboardProfesor from "./components/DashboardProfesor";
 import DashboardAlumno from "./components/DashboardAlumno";
-import VideollamadaClase from "./pages/VideollamadaClase"; // <-- Importa la nueva página de videollamada
+import VideollamadaClase from "./pages/VideollamadaClase";
+import Whiteboard from "./components/Whiteboard"; // <-- Importante
 
 function App() {
   const [user, setUser] = useState(null);
 
-  // Función de logout (puedes moverla a donde prefieras)
+  // Función de logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
@@ -47,7 +48,7 @@ function App() {
           }
         />
 
-        {/* Panel Alumno (real, con sidebar, cursos y clases) */}
+        {/* Panel Alumno */}
         <Route
           path="/dashboard-alumno"
           element={
@@ -59,7 +60,7 @@ function App() {
           }
         />
 
-        {/* Videollamada de clase - Jitsi */}
+        {/* Videollamada de clase */}
         <Route
           path="/videollamada/:room"
           element={
@@ -70,9 +71,14 @@ function App() {
             )
           }
         />
+
+        {/* Ruta de PRUEBA para el tablero */}
+        <Route path="/tablero-test" element={<Whiteboard />} />
+
       </Routes>
     </Router>
   );
 }
 
 export default App;
+
