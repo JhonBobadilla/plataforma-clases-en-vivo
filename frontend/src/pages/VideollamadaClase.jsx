@@ -63,7 +63,8 @@ function VideollamadaClase({ user }) {
         </div>
         {/* TABLERO */}
         <div className="flex flex-col w-[22vw] max-w-xs min-w-[500px] h-full bg-[#1e1e1e] rounded-lg shadow-md p-2 pl-1">
-          <Whiteboard />
+          <Whiteboard rol={user.rol} />
+
         </div>
       </div>
     </div>
