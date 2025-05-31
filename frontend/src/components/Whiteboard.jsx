@@ -114,7 +114,7 @@ const Whiteboard = () => {
         height={stageSize.height - 48} 
         className="rounded-md"
         style={{
-          border: "2px solid #333",
+          border: "2px solid rgb(72, 70, 70)",
           background: "#000",
           flexGrow: 1,
         }}
