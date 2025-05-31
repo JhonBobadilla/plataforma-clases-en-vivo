@@ -1,21 +1,33 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Stage, Layer, Line, Text } from "react-konva";
-
-const BOARD_WIDTH = 600;
-const BOARD_HEIGHT = 400;
-const MARGIN = 8;
 
 const Whiteboard = () => {
   const [lines, setLines] = useState([]);
   const [texts, setTexts] = useState([]);
   const [mode, setMode] = useState("draw"); // "draw" o "text"
   const [isAddingText, setIsAddingText] = useState(false);
-  const [newTextPos, setNewTextPos] = useState({ x: MARGIN, y: MARGIN });
+  const [newTextPos, setNewTextPos] = useState({ x: 8, y: 8 });
   const [inputValue, setInputValue] = useState("");
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+  const containerRef = useRef(null);
   const isDrawing = useRef(false);
   const inputRef = useRef();
 
-  // Dibujo libre
+  useEffect(() => {
+    // Cuando se monta o cambia el tamaño, ajusta el stage al tamaño del contenedor
+    function updateSize() {
+      if (containerRef.current) {
+        setStageSize({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight,
+        });
+      }
+    }
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
   const handleMouseDown = (e) => {
     if (mode !== "draw") return;
     isDrawing.current = true;
@@ -40,7 +52,6 @@ const Whiteboard = () => {
     isDrawing.current = false;
   };
 
-  // Limpiar tablero
   const handleClear = () => {
     setLines([]);
     setTexts([]);
@@ -48,13 +59,13 @@ const Whiteboard = () => {
     setInputValue("");
   };
 
-  // Click para texto solo si modo texto y no ya escribiendo
   const handleStageClick = (e) => {
     if (mode !== "text" || isAddingText) return;
     if (e.target === e.target.getStage()) {
-      setNewTextPos({ x: MARGIN, y: MARGIN });
+      const pointer = e.target.getStage().getPointerPosition();
+      setNewTextPos({ x: pointer.x, y: pointer.y });
       setIsAddingText(true);
-      setInputValue(""); // Empezar nuevo texto vacío
+      setInputValue("");
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -67,24 +78,20 @@ const Whiteboard = () => {
 
   const handleInputChange = (e) => setInputValue(e.target.value);
 
-  // Guardar texto y cerrar textarea
   const handleInputBlur = () => {
     if (inputValue.trim() !== "") {
-      // Guarda texto actual en lista
       setTexts([...texts, { x: newTextPos.x, y: newTextPos.y, text: inputValue }]);
     }
     setIsAddingText(false);
     setInputValue("");
   };
 
-  // Enter = salto de línea, Ctrl+Enter o Esc = cerrar
   const handleInputKeyDown = (e) => {
     if (e.key === "Escape" || (e.key === "Enter" && e.ctrlKey)) {
       handleInputBlur();
     }
   };
 
-  // Cambio de modo; si estaba editando texto lo guarda y cierra textarea
   const changeMode = (newMode) => {
     if (isAddingText && inputValue.trim() !== "") {
       setTexts([...texts, { x: newTextPos.x, y: newTextPos.y, text: inputValue }]);
@@ -95,131 +102,127 @@ const Whiteboard = () => {
   };
 
   return (
-    <div className="flex flex-col items-center h-full w-full">
-      <div className="flex justify-between w-full mb-2">
+    <div
+      ref={containerRef}
+      className="flex flex-col w-full h-full bg-black p-2 rounded-lg"
+      style={{ position: "relative", height: "100%" }}
+    >
+      
+
+      <Stage
+        width={stageSize.width}
+        height={stageSize.height - 48} 
+        className="rounded-md"
+        style={{
+          border: "2px solid #333",
+          background: "#000",
+          flexGrow: 1,
+        }}
+        onClick={handleStageClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onTouchStart={handleMouseDown}
+        onTouchMove={handleMouseMove}
+        onTouchEnd={handleMouseUp}
+      >
+        <Layer>
+          <rect width={stageSize.width} height={stageSize.height - 48} fill="#000" />
+          {lines.map((line, i) => (
+            <Line
+              key={i}
+              points={line.points}
+              stroke="#fff"
+              strokeWidth={3}
+              tension={0.5}
+              lineCap="round"
+              globalCompositeOperation="source-over"
+            />
+          ))}
+          {texts.map((t, i) => (
+            <Text
+              key={i}
+              x={t.x}
+              y={t.y}
+              text={t.text}
+              fontSize={22}
+              fontFamily="Arial"
+              fill="#fff"
+              draggable
+              width={stageSize.width - 16}
+            />
+          ))}
+        </Layer>
+      </Stage>
+
+      {mode === "text" && isAddingText && (
+        <textarea
+          ref={inputRef}
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
+          style={{
+            position: "absolute",
+            top: newTextPos.y - 8,
+            left: newTextPos.x - 4,
+            fontSize: 22,
+            border: "none",
+            borderRadius: 0,
+            padding: 4,
+            outline: "none",
+            color: "#fff",
+            background: "transparent",
+            zIndex: 10,
+            resize: "none",
+            width: stageSize.width - 16,
+            height: stageSize.height - 56,
+            overflow: "auto",
+            whiteSpace: "pre-wrap",
+            wordWrap: "break-word",
+          }}
+          placeholder=""
+          autoFocus
+          rows={5}
+        />
+      )}
+    <div className="flex justify-between mb-2">
         <div className="flex gap-2">
           <button
             className={`px-4 py-1 font-bold rounded transition ${
               mode === "draw"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-blue-600 border border-blue-600"
+                ? "bg-white text-black"
+                : "bg-white text-black border border-none"
             }`}
             onClick={() => changeMode("draw")}
             disabled={mode === "draw"}
           >
-            Dibujar a mano alzada
+            Dibujar
           </button>
           <button
             className={`px-4 py-1 font-bold rounded transition ${
               mode === "text"
-                ? "bg-green-600 text-white"
-                : "bg-white text-green-600 border border-green-600"
+                ? "bg-white text-black"
+                : "bg-white text-black border border-none"
             }`}
             onClick={() => changeMode("text")}
             disabled={mode === "text"}
           >
-            Escribir con teclado
+            Escribir
           </button>
         </div>
         <button
-          className="bg-red-500 text-white rounded px-4 py-1 font-bold hover:bg-red-700 transition ml-4"
+          className="bg-white text-black rounded px-4 py-1 font-bold hover:bg-gray-400 transition ml-4"
           onClick={handleClear}
         >
-          Limpiar tablero
+          Limpiar
         </button>
-      </div>
-      <div
-        style={{
-          position: "relative",
-          width: BOARD_WIDTH,
-          height: BOARD_HEIGHT,
-          background: "#111",
-        }}
-      >
-        <Stage
-          width={BOARD_WIDTH}
-          height={BOARD_HEIGHT}
-          className="shadow-md rounded-lg border"
-          style={{
-            border: "2px solid #333",
-            background: "#000",
-          }}
-          onClick={handleStageClick}
-          onMouseDown={handleMouseDown}
-          onMousemove={handleMouseMove}
-          onMouseup={handleMouseUp}
-          onTouchStart={handleMouseDown}
-          onTouchMove={handleMouseMove}
-          onTouchEnd={handleMouseUp}
-        >
-          <Layer>
-            {/* Rectángulo fondo negro para asegurar el fill */}
-            <rect width={BOARD_WIDTH} height={BOARD_HEIGHT} fill="#000" />
-            {lines.map((line, i) => (
-              <Line
-                key={i}
-                points={line.points}
-                stroke="#fff"
-                strokeWidth={3}
-                tension={0.5}
-                lineCap="round"
-                globalCompositeOperation="source-over"
-              />
-            ))}
-            {texts.map((t, i) => (
-              <Text
-                key={i}
-                x={t.x}
-                y={t.y}
-                text={t.text}
-                fontSize={22}
-                fontFamily="Arial"
-                fill="#fff"
-                draggable
-                width={BOARD_WIDTH - MARGIN * 2} // Para que haga wrap y no se salga
-              />
-            ))}
-          </Layer>
-        </Stage>
-        {mode === "text" && isAddingText && (
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            onKeyDown={handleInputKeyDown}
-            style={{
-              position: "absolute",
-              top: newTextPos.y - 8,
-              left: newTextPos.x - 4,
-              fontSize: 22,
-              border: "none",
-              borderRadius: 0,
-              padding: 4,
-              outline: "none",
-              color: "#fff",
-              background: "transparent",
-              zIndex: 10,
-              resize: "none",
-              width: BOARD_WIDTH - MARGIN * 2,
-              height: BOARD_HEIGHT - MARGIN * 2,
-              overflow: "auto",
-              whiteSpace: "pre-wrap",
-              wordWrap: "break-word",
-            }}
-            placeholder=""
-            autoFocus
-            rows={5}
-          />
-        )}
-      </div>
-      <div className="mt-2 text-xs text-gray-400">
-        {mode === "draw"
-          ? "Modo dibujo: mantén presionado el mouse para dibujar líneas blancas."
-          : "Modo texto: haz clic en el tablero para escribir texto blanco. Usa Ctrl+Enter o Esc para terminar."}
       </div>
     </div>
   );
 };
 
 export default Whiteboard;
+
+
+
