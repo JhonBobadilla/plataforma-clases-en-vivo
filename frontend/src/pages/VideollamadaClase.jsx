@@ -49,7 +49,7 @@ function VideollamadaClase({ user }) {
     <div className="flex flex-col w-screen h-screen bg-black">
       {/* HEADER */}
       <div className="w-full py-2 bg-black">
-        <h1 className="text-2xl font-bold text-indigo-400 text-center">
+        <h1 className="text-2xl font-bold text-white text-center">
           Videollamada - Sala: {room}
         </h1>
       </div>
