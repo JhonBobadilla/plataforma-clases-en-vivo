@@ -1,20 +1,23 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Stage, Layer, Line, Text } from "react-konva";
 
+const MARGIN_LEFT = 20;
+const MARGIN_RIGHT = 40;
+
 const Whiteboard = () => {
   const [lines, setLines] = useState([]);
   const [texts, setTexts] = useState([]);
   const [mode, setMode] = useState("draw"); // "draw" o "text"
   const [isAddingText, setIsAddingText] = useState(false);
-  const [newTextPos, setNewTextPos] = useState({ x: 8, y: 8 });
+  const [newTextPos, setNewTextPos] = useState({ x: MARGIN_LEFT, y: 8 });
   const [inputValue, setInputValue] = useState("");
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
   const isDrawing = useRef(false);
   const inputRef = useRef();
 
+  // Ajustar tamaño dinámico al contenedor (100%)
   useEffect(() => {
-    // Cuando se monta o cambia el tamaño, ajusta el stage al tamaño del contenedor
     function updateSize() {
       if (containerRef.current) {
         setStageSize({
@@ -63,7 +66,7 @@ const Whiteboard = () => {
     if (mode !== "text" || isAddingText) return;
     if (e.target === e.target.getStage()) {
       const pointer = e.target.getStage().getPointerPosition();
-      setNewTextPos({ x: pointer.x, y: pointer.y });
+      setNewTextPos({ x: MARGIN_LEFT, y: pointer.y });
       setIsAddingText(true);
       setInputValue("");
       setTimeout(() => {
@@ -71,16 +74,53 @@ const Whiteboard = () => {
           inputRef.current.focus();
           inputRef.current.selectionStart = 0;
           inputRef.current.selectionEnd = 0;
+          inputRef.current.style.height = "auto";
+          inputRef.current.style.height = inputRef.current.scrollHeight + "px";
         }
       }, 0);
     }
   };
 
-  const handleInputChange = (e) => setInputValue(e.target.value);
+  // --- Cálculo de límites para textarea ---
+  const textareaWidth = Math.max(
+    100,
+    stageSize.width - MARGIN_LEFT - MARGIN_RIGHT
+  );
+
+  const bottomPadding = 48 + 8; // zona de botones + margen
+  // Espacio máximo hacia abajo desde donde clicaste
+  const espacioDisponible = Math.max(
+    38, // minHeight
+    stageSize.height - newTextPos.y - bottomPadding
+  );
+  // Si das clic tan abajo que no cabe el textarea, súbelo más arriba para que sí haya espacio para escribir
+  const textareaTop = Math.min(
+    newTextPos.y,
+    stageSize.height - bottomPadding - 100 // deja siempre al menos 100px para varias líneas
+  );
+  const textareaHeight = Math.min(300, espacioDisponible);
+
+  const limitedTextPos = {
+    x: MARGIN_LEFT,
+    y: textareaTop,
+  };
+
+  // --- Altura dinámica del textarea al escribir ---
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      // Crece hasta el máximo permitido, y nunca muestra scroll interno
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, textareaHeight) + "px";
+    }
+  };
 
   const handleInputBlur = () => {
     if (inputValue.trim() !== "") {
-      setTexts([...texts, { x: newTextPos.x, y: newTextPos.y, text: inputValue }]);
+      setTexts([
+        ...texts,
+        { x: MARGIN_LEFT, y: limitedTextPos.y, text: inputValue }, // x: MARGIN_LEFT SIEMPRE
+      ]);
     }
     setIsAddingText(false);
     setInputValue("");
@@ -94,7 +134,10 @@ const Whiteboard = () => {
 
   const changeMode = (newMode) => {
     if (isAddingText && inputValue.trim() !== "") {
-      setTexts([...texts, { x: newTextPos.x, y: newTextPos.y, text: inputValue }]);
+      setTexts([
+        ...texts,
+        { x: MARGIN_LEFT, y: limitedTextPos.y, text: inputValue },
+      ]);
       setIsAddingText(false);
       setInputValue("");
     }
@@ -107,11 +150,9 @@ const Whiteboard = () => {
       className="flex flex-col w-full h-full bg-black p-2 rounded-lg"
       style={{ position: "relative", height: "100%" }}
     >
-      
-
       <Stage
         width={stageSize.width}
-        height={stageSize.height - 48} 
+        height={stageSize.height - 48}
         className="rounded-md"
         style={{
           border: "2px solid rgb(72, 70, 70)",
@@ -142,14 +183,14 @@ const Whiteboard = () => {
           {texts.map((t, i) => (
             <Text
               key={i}
-              x={t.x}
+              x={MARGIN_LEFT}
               y={t.y}
               text={t.text}
               fontSize={22}
               fontFamily="Arial"
               fill="#fff"
               draggable
-              width={stageSize.width - 16}
+              width={textareaWidth}
             />
           ))}
         </Layer>
@@ -164,8 +205,8 @@ const Whiteboard = () => {
           onKeyDown={handleInputKeyDown}
           style={{
             position: "absolute",
-            top: newTextPos.y - 8,
-            left: newTextPos.x - 4,
+            top: limitedTextPos.y,
+            left: MARGIN_LEFT,
             fontSize: 22,
             border: "none",
             borderRadius: 0,
@@ -175,18 +216,20 @@ const Whiteboard = () => {
             background: "transparent",
             zIndex: 10,
             resize: "none",
-            width: stageSize.width - 16,
-            height: stageSize.height - 56,
-            overflow: "auto",
+            width: textareaWidth,
+            minHeight: 38,
+            maxHeight: textareaHeight,
+            overflow: "hidden", // Nunca scroll interno
             whiteSpace: "pre-wrap",
             wordWrap: "break-word",
+            maxWidth: textareaWidth,
           }}
           placeholder=""
           autoFocus
-          rows={5}
+          rows={1}
         />
       )}
-    <div className="flex justify-between mb-2">
+      <div className="flex justify-between mb-2 mt-1">
         <div className="flex gap-2">
           <button
             className={`px-4 py-1 font-bold rounded transition ${
@@ -223,6 +266,5 @@ const Whiteboard = () => {
 };
 
 export default Whiteboard;
-
 
 
