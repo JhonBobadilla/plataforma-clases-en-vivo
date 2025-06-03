@@ -32,7 +32,6 @@ function Cursos({ user }) {
       setError("Error al cargar los cursos.");
     }
   };
-
   const fetchClasesPorCurso = async (cursoId) => {
     try {
       const res = await axios.get(
