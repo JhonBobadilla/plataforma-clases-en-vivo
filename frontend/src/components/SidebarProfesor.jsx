@@ -19,7 +19,7 @@ function SidebarProfesor({ setSeccion }) {
               onClick={() => setSeccion("clases")}
               className="w-full text-left hover:bg-indigo-600 p-2 rounded"
             >
-              📅 Próximas Clases 
+              📅 Todas las clases 
             </button>
           </li>
           <li>

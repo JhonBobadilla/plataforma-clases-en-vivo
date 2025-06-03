@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom"; // <-- Importa Link
+import { Link } from "react-router-dom";
 
 function MisCursosAlumno({ user }) {
   const [cursos, setCursos] = useState([]);
-  const [cursoExpandido, setCursoExpandido] = useState(null);
   const [clasesPorCurso, setClasesPorCurso] = useState({});
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
@@ -28,22 +27,23 @@ function MisCursosAlumno({ user }) {
     }
   };
 
-  // Trae las clases de un curso específico
-  const fetchClasesPorCurso = async (cursoId) => {
-    try {
-      const res = await axios.get(
-        `http://localhost:3000/api/cursos/${cursoId}/clases`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setClasesPorCurso((prev) => ({
-        ...prev,
-        [cursoId]: res.data,
-      }));
-      setCursoExpandido(cursoId);
-    } catch {
-      alert("Error al cargar las clases.");
+  // Trae las clases de todos los cursos una vez (para que siempre estén listadas)
+  const fetchClasesTodosCursos = async (listaCursos) => {
+    for (const curso of listaCursos) {
+      try {
+        const res = await axios.get(
+          `http://localhost:3000/api/cursos/${curso.id}/clases`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setClasesPorCurso((prev) => ({
+          ...prev,
+          [curso.id]: res.data,
+        }));
+      } catch {
+        // Opcional: manejo de error individual
+      }
     }
   };
 
@@ -60,17 +60,45 @@ function MisCursosAlumno({ user }) {
         }
       );
       setMensaje("✅ Te has desinscrito correctamente del curso.");
-      fetchCursos(); // Refresca lista de cursos
-      setCursoExpandido(null); // Cierra clases
+      fetchCursos();
+      setClasesPorCurso((prev) => {
+        const nuevo = { ...prev };
+        delete nuevo[cursoId];
+        return nuevo;
+      });
     } catch (err) {
       setMensaje("❌ Error al desinscribirse del curso.");
     }
   };
 
+  // Formateador simple de fecha y hora
+  function formateaFechaHora(fecha, hora) {
+    let fechaStr = fecha;
+    let horaStr = hora;
+    try {
+      if (fecha && fecha.includes("T")) {
+        const d = new Date(fecha);
+        fechaStr = d.toLocaleDateString();
+      }
+      if (hora && hora.length > 5) {
+        horaStr = hora.substring(0, 5);
+      }
+    } catch {}
+    return `${fechaStr} ${horaStr}`;
+  }
+
   useEffect(() => {
     fetchCursos();
     // eslint-disable-next-line
   }, [user]);
+
+  // Cada vez que se cargan los cursos, se traen las clases de todos los cursos
+  useEffect(() => {
+    if (cursos.length > 0) {
+      fetchClasesTodosCursos(cursos);
+    }
+    // eslint-disable-next-line
+  }, [cursos]);
 
   return (
     <div className="p-4">
@@ -91,50 +119,48 @@ function MisCursosAlumno({ user }) {
           >
             <h3 className="text-xl font-semibold">{curso.nombre}</h3>
             <p className="text-gray-600">{curso.descripcion}</p>
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() =>
-                  cursoExpandido === curso.id
-                    ? setCursoExpandido(null)
-                    : fetchClasesPorCurso(curso.id)
-                }
-                className="mt-3 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-              >
-                {cursoExpandido === curso.id ? "Ocultar Clases" : "Ver Clases"}
-              </button>
-              <button
-                onClick={() => handleDesinscribirme(curso.id)}
-                className="ml-2 mt-3 bg-red-300 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-              >
-                Desinscribirme
-              </button>
-            </div>
-            {cursoExpandido === curso.id && (
-              <div className="mt-4">
-                <h4 className="font-bold text-sm mb-2 text-indigo-600">
-                  Clases de este curso:
-                </h4>
-                <ul className="text-sm list-disc list-inside mb-3">
-                  {(clasesPorCurso[curso.id] || []).length === 0 ? (
-                    <li className="text-gray-500">Este curso no tiene clases.</li>
-                  ) : (
-                    clasesPorCurso[curso.id].map((clase) => (
-                      <li key={clase.id} className="mb-4">
-                        <div>
-                          <span className="font-medium">{clase.titulo}</span>
-                          <span className="ml-2 text-gray-600">
-                            ({clase.fecha} {clase.hora})
-                          </span>
+            <div className="mt-4">
+              <h4 className="font-bold text-sm mb-2 text-indigo-600">
+                Clases de este curso:
+              </h4>
+              <ul className="text-sm list-disc list-inside mb-3">
+                {(clasesPorCurso[curso.id] || []).length === 0 ? (
+                  <li className="text-gray-500">Este curso no tiene clases.</li>
+                ) : (
+                  clasesPorCurso[curso.id].map((clase) => (
+                    <li
+                      key={clase.id}
+                      className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-medium">
+                          {clase.titulo}
+                        </span>
+                        <span className="ml-2 text-gray-600">
+                          ({formateaFechaHora(clase.fecha, clase.hora)})
+                        </span>
+                        <div className="text-xs text-gray-500 mb-1">
+                          {clase.descripcion}
                         </div>
-                        <div className="text-xs text-gray-500 mb-1">{clase.descripcion}</div>
-                        {/* BOTÓN CORREGIDO: */}
-                        
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            )}
+                      </div>
+                      {/* Botón ENTRAR A CLASE */}
+                      <Link
+                        to={`/videollamada/${encodeURIComponent(clase.titulo.replace(/\s+/g, "") + "-" + clase.id)}`}
+                        className="mt-1 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs text-center"
+                      >
+                        Entrar a clase
+                      </Link>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+            {/* Botón Desinscribirme ABAJO */}
+            <button
+              onClick={() => handleDesinscribirme(curso.id)}
+              className="w-full bg-red-300 hover:bg-red-700 text-white py-1 rounded text-sm">
+              Eliminarme del curso
+            </button>
           </div>
         ))}
       </div>
@@ -143,4 +169,6 @@ function MisCursosAlumno({ user }) {
 }
 
 export default MisCursosAlumno;
+
+
 
