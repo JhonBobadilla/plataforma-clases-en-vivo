@@ -239,7 +239,7 @@ function Cursos({ user }) {
               onClick={() => fetchClasesPorCurso(curso.id)}
               className="mt-3 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
             >
-              Clases
+              Crear clases
             </button>
 
             {cursoExpandido === curso.id && (
@@ -263,15 +263,7 @@ function Cursos({ user }) {
                       >
                         Eliminar
                       </button>
-                      {/* Cambia aquí el botón para abrir la videollamada dentro de la app */}
-                      <Link
-                        to={`/videollamada/${encodeURIComponent(
-                          (clase.titulo.replace(/\s+/g, "") + "-" + clase.id)
-                        )}`}
-                        className="ml-2 mt-3 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm"
-                      >
-                        Entrar a la clase
-                      </Link>
+                      
                       {editandoClaseId === clase.id && (
                         <form
                           onSubmit={(e) => {

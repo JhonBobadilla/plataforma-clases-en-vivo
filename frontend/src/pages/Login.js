@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Login({ onLogin }) {
+  console.log("Componente Login cargó"); // Para saber que el componente está en uso
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -10,24 +12,34 @@ function Login({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    console.log("Se ejecuta handleSubmit");
+    // Usar variable de entorno para la URL del backend
+    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+    console.log("API URL:", API_URL);
+    console.log("Intentando login en:", `${API_URL}/api/auth/login`);
     try {
-      const response = await fetch("http://192.168.1.10:3000/api/auth/login", {
-
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
 
+      console.log("Respuesta del backend:", response);
+      console.log("Datos recibidos:", data);
+
       if (!response.ok) {
         setError(data.message || "Error al iniciar sesión");
+        console.log("Error de autenticación:", data.message);
         return;
       }
 
       localStorage.setItem("token", data.token);
       if (onLogin) onLogin(data.usuario);
-    } catch {
+      console.log("Login exitoso:", data.usuario);
+    } catch (err) {
       setError("Error al conectar al servidor");
+      console.log("Error al conectar al servidor:", err);
     }
   };
 
@@ -74,3 +86,5 @@ function Login({ onLogin }) {
 }
 
 export default Login;
+
+

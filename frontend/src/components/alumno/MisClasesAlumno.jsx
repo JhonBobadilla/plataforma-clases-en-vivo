@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 function MisClasesAlumno({ user }) {
   const [clases, setClases] = useState([]);
@@ -11,30 +12,22 @@ function MisClasesAlumno({ user }) {
     const fetchClasesAlumno = async () => {
       try {
         // 1. Trae los cursos a los que el alumno está inscrito
-        const cursosRes = await axios.get("http://192.168.1.10:3000/api/cursos/inscritos", {
+        const cursosRes = await axios.get("http://localhost:3000/api/cursos/inscritos", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const cursosIds = cursosRes.data.map((curso) => Number(curso.id));
-        console.log("Cursos a los que está inscrito:", cursosRes.data);
-        console.log("IDs de cursos:", cursosIds);
-
         // 2. Trae todas las clases
-        const clasesRes = await axios.get("http://192.168.1.10:3000/api/clases", {
+        const clasesRes = await axios.get("http://localhost:3000/api/clases", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Todas las clases:", clasesRes.data);
-
         // 3. Filtra las clases que pertenecen a los cursos inscritos
         const clasesFiltradas = clasesRes.data.filter((clase) =>
           cursosIds.includes(Number(clase.curso_id))
         );
-        console.log("Clases filtradas:", clasesFiltradas);
-
         // 4. Solo clases futuras (opcional)
         const ahora = new Date();
         const clasesOrdenadas = clasesFiltradas
           .filter((clase) => {
-            // Extraer solo la fecha YYYY-MM-DD
             const fechaSolo = clase.fecha.split('T')[0];
             const claseDate = new Date(`${fechaSolo}T${clase.hora}`);
             return claseDate >= ahora;
@@ -46,8 +39,6 @@ function MisClasesAlumno({ user }) {
             const dateB = new Date(`${fechaB}T${b.hora}`);
             return dateA - dateB;
           });
-
-        console.log("Clases ordenadas y futuras:", clasesOrdenadas);
 
         setClases(clasesOrdenadas);
       } catch (err) {
@@ -81,6 +72,15 @@ function MisClasesAlumno({ user }) {
               <p className="text-sm text-blue-600 font-semibold">
                 Curso: {clase.nombre_curso || clase.curso_id}
               </p>
+              {/* BOTÓN ENTRAR A CLASE */}
+              <Link
+                to={`/videollamada/${encodeURIComponent(
+                  (clase.titulo.replace(/\s+/g, "") + "-" + clase.id)
+                )}`}
+                className="block mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm text-center"
+              >
+                Entrar a la clase
+              </Link>
             </div>
           ))}
         </div>

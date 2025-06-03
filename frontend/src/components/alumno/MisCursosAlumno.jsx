@@ -17,7 +17,7 @@ function MisCursosAlumno({ user }) {
     if (!user || !user.id) return;
     try {
       const res = await axios.get(
-        `http://192.168.1.10:3000/api/usuarios/${user.id}/cursos`,
+        `http://localhost:3000/api/usuarios/${user.id}/cursos`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -32,7 +32,7 @@ function MisCursosAlumno({ user }) {
   const fetchClasesPorCurso = async (cursoId) => {
     try {
       const res = await axios.get(
-        `http://192.168.1.10:3000/api/cursos/${cursoId}/clases`,
+        `http://localhost:3000/api/cursos/${cursoId}/clases`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -53,7 +53,7 @@ function MisCursosAlumno({ user }) {
     if (!window.confirm("¿Seguro que deseas desinscribirte de este curso?")) return;
     try {
       await axios.delete(
-        `http://192.168.1.10:3000/api/cursos/${cursoId}/inscribir`,
+        `http://localhost:3000/api/cursos/${cursoId}/inscribir`,
         {
           headers: { Authorization: `Bearer ${token}` },
           data: { alumnoId: user.id },
@@ -128,14 +128,7 @@ function MisCursosAlumno({ user }) {
                         </div>
                         <div className="text-xs text-gray-500 mb-1">{clase.descripcion}</div>
                         {/* BOTÓN CORREGIDO: */}
-                        <Link
-                          to={`/videollamada/${encodeURIComponent(
-                            (clase.titulo.replace(/\s+/g, "") + "-" + clase.id)
-                          )}`}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs mt-1"
-                        >
-                          Entrar a clase
-                        </Link>
+                        
                       </li>
                     ))
                   )}
