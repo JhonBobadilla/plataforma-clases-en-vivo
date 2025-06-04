@@ -87,6 +87,50 @@ function MisCursosAlumno({ user }) {
     return `${fechaStr} ${horaStr}`;
   }
 
+  // Saber si la clase terminó hace 2 horas o más (mostrar chulo solo si han pasado 2h del inicio)
+  function claseTerminada(clase) {
+    if (!clase.fecha || !clase.hora) return false;
+    const fechaHoraStr =
+      clase.fecha.length > 10
+        ? clase.fecha.substring(0, 10)
+        : clase.fecha;
+    const [ano, mes, dia] = fechaHoraStr.split("-");
+    const [hora, minutos] = clase.hora.split(":");
+    const fechaClase = new Date(
+      Number(ano),
+      Number(mes) - 1,
+      Number(dia),
+      Number(hora),
+      Number(minutos)
+    );
+    const ahora = new Date();
+    // Chulo aparece solo si han pasado 2h o más desde el inicio
+    return ahora.getTime() >= fechaClase.getTime() + 2 * 60 * 60 * 1000;
+  }
+
+  // Saber si ya puede entrar (desde 24h antes hasta 2h después de iniciada la clase)
+  function puedeEntrar(clase) {
+    if (!clase.fecha || !clase.hora) return false;
+    const fechaHoraStr =
+      clase.fecha.length > 10
+        ? clase.fecha.substring(0, 10)
+        : clase.fecha;
+    const [ano, mes, dia] = fechaHoraStr.split("-");
+    const [hora, minutos] = clase.hora.split(":");
+    const fechaClase = new Date(
+      Number(ano),
+      Number(mes) - 1,
+      Number(dia),
+      Number(hora),
+      Number(minutos)
+    );
+    const ahora = new Date();
+    const msAntes = fechaClase.getTime() - ahora.getTime(); // < 0 si ya inició
+    const msDespues = ahora.getTime() - fechaClase.getTime(); // >= 0 si ya inició
+    // Puedes entrar si falta menos de 24h y han pasado menos de 2h desde el inicio
+    return msAntes <= 24 * 60 * 60 * 1000 && msDespues < 2 * 60 * 60 * 1000 && msAntes < 2 * 60 * 60 * 1000;
+  }
+
   useEffect(() => {
     fetchCursos();
     // eslint-disable-next-line
@@ -127,40 +171,53 @@ function MisCursosAlumno({ user }) {
                 {(clasesPorCurso[curso.id] || []).length === 0 ? (
                   <li className="text-gray-500">Este curso no tiene clases.</li>
                 ) : (
-                  clasesPorCurso[curso.id].map((clase) => (
-                    <li
-                      key={clase.id}
-                      className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between"
-                    >
-                      <div>
-                        <span className="font-medium">
-                          {clase.titulo}
-                        </span>
-                        <span className="ml-2 text-gray-600">
-                          ({formateaFechaHora(clase.fecha, clase.hora)})
-                        </span>
-                        <div className="text-xs text-gray-500 mb-1">
-                          {clase.descripcion}
-                        </div>
-                      </div>
-                      {/* Botón ENTRAR A CLASE */}
-                      <Link
-                        to={`/videollamada/${encodeURIComponent(clase.titulo.replace(/\s+/g, "") + "-" + clase.id)}`}
-                        className="mt-1 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs text-center"
+                  clasesPorCurso[curso.id].map((clase) => {
+                    const terminada = claseTerminada(clase);
+                    const mostrarEntrar = !terminada && puedeEntrar(clase);
+                    return (
+                      <li
+                        key={clase.id}
+                        className={`mb-4 flex flex-col sm:flex-row sm:items-center justify-between ${
+                          terminada ? "bg-blue-100 rounded px-2 py-1" : ""
+                        }`}
                       >
-                        Entrar a clase
-                      </Link>
-                    </li>
-                  ))
+                        <div>
+                          <span className="font-medium">
+                            {clase.titulo}
+                          </span>
+                          <span className="ml-2 text-gray-600">
+                            ({formateaFechaHora(clase.fecha, clase.hora)})
+                          </span>
+                          <div className="text-xs text-gray-500 mb-1">
+                            {clase.descripcion}
+                          </div>
+                        </div>
+                        {/* Chulito SOLO si ya pasaron 2h del inicio, si no, botón */}
+                        {terminada ? (
+                          <span className="text-green-500 text-lg ml-3">✅</span>
+                        ) : mostrarEntrar ? (
+                          <Link
+                            to={`/videollamada/${encodeURIComponent(
+                              clase.titulo.replace(/\s+/g, "") + "-" + clase.id
+                            )}`}
+                            className="mt-1 sm:mt-0 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs text-center"
+                          >
+                            Entrar a clase
+                          </Link>
+                        ) : null}
+                      </li>
+                    );
+                  })
                 )}
               </ul>
             </div>
             {/* Botón Desinscribirme ABAJO */}
-            <button
+            <span
               onClick={() => handleDesinscribirme(curso.id)}
-              className="w-full bg-red-300 hover:bg-red-700 text-white py-1 rounded text-sm">
+              className="w-left text-red-300 py-1 rounded text-sm cursor-pointer"
+            >
               Eliminarme del curso
-            </button>
+            </span>
           </div>
         ))}
       </div>
@@ -169,6 +226,4 @@ function MisCursosAlumno({ user }) {
 }
 
 export default MisCursosAlumno;
-
-
 

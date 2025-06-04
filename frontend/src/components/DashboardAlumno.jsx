@@ -9,7 +9,7 @@ function DashboardAlumno({ user, onLogout }) {
   const [seccion, setSeccion] = useState("mis_cursos");
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-200">
       {/* Sidebar fijo */}
       <SidebarAlumno setSeccion={setSeccion} />
 

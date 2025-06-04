@@ -198,6 +198,27 @@ function Cursos({ user }) {
     return `${fechaStr} ${horaStr}`;
   }
 
+  // Mostrar chulo 22 horas después de iniciada la clase
+  function mostrarChulo22hDespues(clase) {
+    if (!clase.fecha || !clase.hora) return false;
+    const fechaHoraStr =
+      clase.fecha.length > 10
+        ? clase.fecha.substring(0, 10)
+        : clase.fecha;
+    const [ano, mes, dia] = fechaHoraStr.split("-");
+    const [hora, minutos] = clase.hora.split(":");
+    const fechaClase = new Date(
+      Number(ano),
+      Number(mes) - 1,
+      Number(dia),
+      Number(hora),
+      Number(minutos)
+    );
+    const ahora = new Date();
+    // ✅ Aparece solo si han pasado 1h o más desde el inicio de la clase
+    return ahora.getTime() >= fechaClase.getTime() + 1 * 60 * 60 * 1000;
+  }
+
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">📘 Mis Cursos</h2>
@@ -262,92 +283,108 @@ function Cursos({ user }) {
                     Clases de este curso:
                   </h4>
                   <ul className="text-sm list-disc list-inside mb-3">
-                    {(clasesPorCurso[curso.id] || []).map((clase) => (
-                      <li key={clase.id} className="mb-2 flex flex-col sm:flex-row sm:items-center">
-                        {/* Link para entrar a la clase */}
-                        <Link
-                          to={`/videollamada/${encodeURIComponent(clase.titulo.replace(/\s+/g, "") + "-" + clase.id)}`}
-                          className="font-medium text-blue-600 cursor-pointer hover:underline"
+                    {(clasesPorCurso[curso.id] || []).map((clase) => {
+                      const chulo = mostrarChulo22hDespues(clase);
+                      return (
+                        <li
+                          key={clase.id}
+                          className={`mb-2 flex flex-col sm:flex-row sm:items-center ${
+                            chulo ? "bg-blue-100 rounded px-2 py-1" : ""
+                          }`}
                         >
-                          {clase.titulo} ({formateaFechaHora(clase.fecha, clase.hora)})
-                        </Link>
-                        {/* Textos de editar y eliminar clase */}
-                        <div className="flex gap-3 ml-0 sm:ml-3 mt-1 sm:mt-0">
-                          <span
-                            onClick={() => startEdit(clase)}
-                            className="text-blue-500 cursor-pointer hover:underline text-xs"
+                          {/* Link para entrar a la clase */}
+                          <Link
+                            to={`/videollamada/${encodeURIComponent(
+                              clase.titulo.replace(/\s+/g, "") + "-" + clase.id
+                            )}`}
+                            className="font-medium text-blue-600 cursor-pointer hover:underline"
                           >
-                            Editar
-                          </span>
-                          <span
-                            onClick={() => eliminarClase(clase.id)}
-                            className="text-red-500 cursor-pointer hover:underline text-xs"
-                          >
-                            Eliminar
-                          </span>
-                        </div>
-                        {/* Formulario de edición de clase */}
-                        {editandoClaseId === clase.id && (
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              saveEdit(clase.id);
-                            }}
-                            className="bg-gray-100 p-3 mt-2 rounded"
-                          >
-                            <input
-                              type="text"
-                              name="titulo"
-                              value={editForm.titulo}
-                              onChange={handleEditChange}
-                              placeholder="Título"
-                              className="w-full mb-2 p-1 border rounded text-sm"
-                              required
-                            />
-                            <input
-                              type="text"
-                              name="descripcion"
-                              value={editForm.descripcion}
-                              onChange={handleEditChange}
-                              placeholder="Descripción"
-                              className="w-full mb-2 p-1 border rounded text-sm"
-                              required
-                            />
-                            <input
-                              type="date"
-                              name="fecha"
-                              value={editForm.fecha}
-                              onChange={handleEditChange}
-                              className="w-full mb-2 p-1 border rounded text-sm"
-                              required
-                            />
-                            <input
-                              type="time"
-                              name="hora"
-                              value={editForm.hora}
-                              onChange={handleEditChange}
-                              className="w-full mb-2 p-1 border rounded text-sm"
-                              required
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                type="submit"
-                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                              >
-                                Guardar
-                              </button>
-                              <button
-                                type="button"
-                                className="bg-gray-300 text-black px-3 py-1 rounded text-sm"
-                                onClick={() => setEditandoClaseId(null)}
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </form>
-                        )}
-                      </li>
-                    ))}
+                            {clase.titulo} ({formateaFechaHora(clase.fecha, clase.hora)})
+                          </Link>
+                          {/* Editar y eliminar clase o chulito */}
+                          <div className="flex gap-3 ml-0 sm:ml-3 mt-1 sm:mt-0 items-center">
+                            {chulo ? (
+                              <span className="text-green-500 text-lg ml-2">✅</span>
+                            ) : (
+                              <>
+                                <span
+                                  onClick={() => startEdit(clase)}
+                                  className="text-blue-500 cursor-pointer hover:underline text-xs"
+                                >
+                                  Editar
+                                </span>
+                                <span
+                                  onClick={() => eliminarClase(clase.id)}
+                                  className="text-red-500 cursor-pointer hover:underline text-xs"
+                                >
+                                  Eliminar
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          {/* Formulario de edición de clase */}
+                          {editandoClaseId === clase.id && !chulo && (
+                            <form
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                saveEdit(clase.id);
+                              }}
+                              className="bg-gray-100 p-3 mt-2 rounded"
+                            >
+                              <input
+                                type="text"
+                                name="titulo"
+                                value={editForm.titulo}
+                                onChange={handleEditChange}
+                                placeholder="Título"
+                                className="w-full mb-2 p-1 border rounded text-sm"
+                                required
+                              />
+                              <input
+                                type="text"
+                                name="descripcion"
+                                value={editForm.descripcion}
+                                onChange={handleEditChange}
+                                placeholder="Descripción"
+                                className="w-full mb-2 p-1 border rounded text-sm"
+                                required
+                              />
+                              <input
+                                type="date"
+                                name="fecha"
+                                value={editForm.fecha}
+                                onChange={handleEditChange}
+                                className="w-full mb-2 p-1 border rounded text-sm"
+                                required
+                              />
+                              <input
+                                type="time"
+                                name="hora"
+                                value={editForm.hora}
+                                onChange={handleEditChange}
+                                className="w-full mb-2 p-1 border rounded text-sm"
+                                required
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  type="submit"
+                                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                                >
+                                  Guardar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="bg-gray-300 text-black px-3 py-1 rounded text-sm"
+                                  onClick={() => setEditandoClaseId(null)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </form>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 

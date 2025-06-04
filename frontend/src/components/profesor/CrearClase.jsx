@@ -25,8 +25,8 @@ function CrearClase({ cursoId, profesorId, onClaseCreada }) {
         {
           titulo,
           descripcion,
-          fecha,
-          hora,
+          fecha,      // solo la fecha: "2025-06-18"
+          hora,       // solo la hora:  "19:00" o "19:00:00"
           cursoId,
           profesorId,
         },
@@ -93,5 +93,3 @@ function CrearClase({ cursoId, profesorId, onClaseCreada }) {
 }
 
 export default CrearClase;
-
-

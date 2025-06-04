@@ -77,7 +77,7 @@ function MisClasesAlumno({ user }) {
                 to={`/videollamada/${encodeURIComponent(
                   (clase.titulo.replace(/\s+/g, "") + "-" + clase.id)
                 )}`}
-                className="block mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm text-center"
+                className="block mt-3 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm text-center"
               >
                 Entrar a la clase
               </Link>

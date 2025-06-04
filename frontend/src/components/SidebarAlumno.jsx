@@ -1,7 +1,7 @@
 function SidebarAlumno({ setSeccion }) {
   return (
-    <div className="w-64 bg-indigo-700 text-white flex flex-col">
-      <div className="p-4 text-center text-2xl font-bold border-b border-indigo-500">
+    <div className="w-64 bg-indigo-600 text-white flex flex-col">
+      <div className="p-4 text-center text-2xl font-bold border-b border-indigo-400">
         Panel Alumno
       </div>
       <nav className="flex-1 p-4">
@@ -9,7 +9,7 @@ function SidebarAlumno({ setSeccion }) {
           <li>
             <button
               onClick={() => setSeccion("mis_cursos")}
-              className="w-full text-left hover:bg-indigo-600 p-2 rounded"
+              className="w-full text-left hover:bg-indigo-500 p-2 rounded"
             >
               📚 Mis Cursos
             </button>
@@ -18,7 +18,7 @@ function SidebarAlumno({ setSeccion }) {
           <li>
             <button
               onClick={() => setSeccion("cursos_disponibles")}
-              className="w-full text-left hover:bg-indigo-600 p-2 rounded"
+              className="w-full text-left hover:bg-indigo-500 p-2 rounded"
             >
               🆕 Cursos Disponibles
             </button>
@@ -27,14 +27,14 @@ function SidebarAlumno({ setSeccion }) {
           <li>
             <button
               onClick={() => setSeccion("panel_control")}
-              className="w-full text-left hover:bg-indigo-600 p-2 rounded"
+              className="w-full text-left hover:bg-indigo-500 p-2 rounded"
             >
               🛠️ Editar usuario
             </button>
           </li>
         </ul>
       </nav>
-      <div className="p-4 border-t border-indigo-500 text-sm text-center">
+      <div className="p-4 border-t border-indigo-400 text-sm text-center">
         © 2025 JABL
       </div>
     </div>

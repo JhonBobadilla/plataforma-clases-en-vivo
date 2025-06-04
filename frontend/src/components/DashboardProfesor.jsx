@@ -11,7 +11,7 @@ function DashboardProfesor({ user, onLogout }) {
     <div className="flex h-screen">
       <SidebarProfesor setSeccion={setSeccion} />
 
-      <div className="flex-1 p-4 overflow-y-auto bg-gray-100">
+      <div className="flex-1 p-4 overflow-y-auto bg-gray-200">
         {seccion === "cursos" && <Cursos user={user} />}
         {seccion === "clases" && <Clases user={user} />}
         {seccion === "panel_control" && (
