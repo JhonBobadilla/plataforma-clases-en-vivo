@@ -7,6 +7,15 @@ const crearClase = async (req, res) => {
     return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
   }
   try {
+    // ------- LOG DE ENTRADA -------
+    console.log('Voy a guardar:');
+    console.log('titulo:', titulo);
+    console.log('descripcion:', descripcion);
+    console.log('fecha:', fecha);
+    console.log('hora:', hora);
+    console.log('profesorId:', profesorId);
+    console.log('cursoId:', cursoId);
+
     // Valida que el curso exista
     const curso = await pool.query('SELECT * FROM cursos WHERE id = $1', [cursoId]);
     if (curso.rows.length === 0) {
@@ -169,6 +178,7 @@ module.exports = {
   editarClase,
   eliminarClase,
 };
+
 
 
 

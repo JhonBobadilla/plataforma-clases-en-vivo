@@ -184,19 +184,9 @@ function Cursos({ user }) {
 
   // Formateador simple de fecha y hora
   function formateaFechaHora(fecha, hora) {
-    let fechaStr = fecha;
-    let horaStr = hora;
-    try {
-      if (fecha && fecha.includes("T")) {
-        const d = new Date(fecha);
-        fechaStr = d.toLocaleDateString();
-      }
-      if (hora && hora.length > 5) {
-        horaStr = hora.substring(0, 5);
-      }
-    } catch {}
-    return `${fechaStr} ${horaStr}`;
-  }
+  return `${fecha} ${hora ? hora.slice(0, 5) : ""}`;
+}
+
 
   // Mostrar chulo 22 horas después de iniciada la clase
   function mostrarChulo22hDespues(clase) {
@@ -215,8 +205,8 @@ function Cursos({ user }) {
       Number(minutos)
     );
     const ahora = new Date();
-    // ✅ Aparece solo si han pasado 1h o más desde el inicio de la clase
-    return ahora.getTime() >= fechaClase.getTime() + 1 * 60 * 60 * 1000;
+    // ✅ Aparece solo si han pasado 3h o más desde el inicio de la clase
+    return ahora.getTime() >= fechaClase.getTime() + 3 * 60 * 60 * 1000;
   }
 
   return (

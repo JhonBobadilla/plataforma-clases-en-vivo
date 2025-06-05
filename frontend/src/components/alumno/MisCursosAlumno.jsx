@@ -27,22 +27,20 @@ function MisCursosAlumno({ user }) {
     }
   };
 
-  // Trae las clases de todos los cursos una vez (para que siempre estén listadas)
+  // Trae las clases de todos los cursos una vez
   const fetchClasesTodosCursos = async (listaCursos) => {
     for (const curso of listaCursos) {
       try {
         const res = await axios.get(
           `http://localhost:3000/api/cursos/${curso.id}/clases`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         setClasesPorCurso((prev) => ({
           ...prev,
           [curso.id]: res.data,
         }));
       } catch {
-        // Opcional: manejo de error individual
+        // Manejo de error individual opcional
       }
     }
   };
@@ -66,35 +64,22 @@ function MisCursosAlumno({ user }) {
         delete nuevo[cursoId];
         return nuevo;
       });
-    } catch (err) {
+    } catch {
       setMensaje("❌ Error al desinscribirse del curso.");
     }
   };
 
   // Formateador simple de fecha y hora
   function formateaFechaHora(fecha, hora) {
-    let fechaStr = fecha;
-    let horaStr = hora;
-    try {
-      if (fecha && fecha.includes("T")) {
-        const d = new Date(fecha);
-        fechaStr = d.toLocaleDateString();
-      }
-      if (hora && hora.length > 5) {
-        horaStr = hora.substring(0, 5);
-      }
-    } catch {}
-    return `${fechaStr} ${horaStr}`;
+    // Siempre muestra la fecha y la hora tal como vienen de la base de datos
+    return `${fecha} ${hora ? hora.slice(0, 5) : ""}`;
   }
 
-  // Saber si la clase terminó hace 2 horas o más (mostrar chulo solo si han pasado 2h del inicio)
+  // Saber si la clase terminó hace 22 horas o más (mostrar chulo)
   function claseTerminada(clase) {
     if (!clase.fecha || !clase.hora) return false;
-    const fechaHoraStr =
-      clase.fecha.length > 10
-        ? clase.fecha.substring(0, 10)
-        : clase.fecha;
-    const [ano, mes, dia] = fechaHoraStr.split("-");
+    const fechaSolo = clase.fecha.includes("T") ? clase.fecha.split("T")[0] : clase.fecha;
+    const [ano, mes, dia] = fechaSolo.split("-");
     const [hora, minutos] = clase.hora.split(":");
     const fechaClase = new Date(
       Number(ano),
@@ -103,32 +88,9 @@ function MisCursosAlumno({ user }) {
       Number(hora),
       Number(minutos)
     );
-    const ahora = new Date();
-    // Chulo aparece solo si han pasado 2h o más desde el inicio
-    return ahora.getTime() >= fechaClase.getTime() + 2 * 60 * 60 * 1000;
-  }
-
-  // Saber si ya puede entrar (desde 24h antes hasta 2h después de iniciada la clase)
-  function puedeEntrar(clase) {
-    if (!clase.fecha || !clase.hora) return false;
-    const fechaHoraStr =
-      clase.fecha.length > 10
-        ? clase.fecha.substring(0, 10)
-        : clase.fecha;
-    const [ano, mes, dia] = fechaHoraStr.split("-");
-    const [hora, minutos] = clase.hora.split(":");
-    const fechaClase = new Date(
-      Number(ano),
-      Number(mes) - 1,
-      Number(dia),
-      Number(hora),
-      Number(minutos)
-    );
-    const ahora = new Date();
-    const msAntes = fechaClase.getTime() - ahora.getTime(); // < 0 si ya inició
-    const msDespues = ahora.getTime() - fechaClase.getTime(); // >= 0 si ya inició
-    // Puedes entrar si falta menos de 24h y han pasado menos de 2h desde el inicio
-    return msAntes <= 24 * 60 * 60 * 1000 && msDespues < 2 * 60 * 60 * 1000 && msAntes < 2 * 60 * 60 * 1000;
+    const ahora = Date.now();
+    // ✅ Chulito aparece solo si han pasado 3h o más desde el inicio
+    return ahora >= fechaClase.getTime() + 3 * 60 * 60 * 1000;
   }
 
   useEffect(() => {
@@ -136,7 +98,6 @@ function MisCursosAlumno({ user }) {
     // eslint-disable-next-line
   }, [user]);
 
-  // Cada vez que se cargan los cursos, se traen las clases de todos los cursos
   useEffect(() => {
     if (cursos.length > 0) {
       fetchClasesTodosCursos(cursos);
@@ -173,38 +134,33 @@ function MisCursosAlumno({ user }) {
                 ) : (
                   clasesPorCurso[curso.id].map((clase) => {
                     const terminada = claseTerminada(clase);
-                    const mostrarEntrar = !terminada && puedeEntrar(clase);
                     return (
                       <li
                         key={clase.id}
-                        className={`mb-4 flex flex-col sm:flex-row sm:items-center justify-between ${
+                        className={`mb-4 ${
                           terminada ? "bg-blue-100 rounded px-2 py-1" : ""
                         }`}
                       >
-                        <div>
-                          <span className="font-medium">
-                            {clase.titulo}
-                          </span>
-                          <span className="ml-2 text-gray-600">
-                            ({formateaFechaHora(clase.fecha, clase.hora)})
-                          </span>
-                          <div className="text-xs text-gray-500 mb-1">
-                            {clase.descripcion}
+                        <Link
+                          to={`/videollamada/${encodeURIComponent(
+                            clase.titulo.replace(/\s+/g, "") + "-" + clase.id
+                          )}`}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between font-medium text-blue-600 hover:underline cursor-pointer"
+                        >
+                          <div>
+                            <span>{clase.titulo}</span>
+                            <span className="ml-2 text-gray-600">
+                              ({formateaFechaHora(clase.fecha, clase.hora)})
+                            </span>
+                            <div className="text-xs text-gray-500 mb-1">
+                              {clase.descripcion}
+                            </div>
                           </div>
-                        </div>
-                        {/* Chulito SOLO si ya pasaron 2h del inicio, si no, botón */}
-                        {terminada ? (
-                          <span className="text-green-500 text-lg ml-3">✅</span>
-                        ) : mostrarEntrar ? (
-                          <Link
-                            to={`/videollamada/${encodeURIComponent(
-                              clase.titulo.replace(/\s+/g, "") + "-" + clase.id
-                            )}`}
-                            className="mt-1 sm:mt-0 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs text-center"
-                          >
-                            Entrar a clase
-                          </Link>
-                        ) : null}
+                          {/* Chulito SOLO si ya pasaron 22h del inicio */}
+                          {terminada && (
+                            <span className="text-green-500 text-lg ml-3">✅</span>
+                          )}
+                        </Link>
                       </li>
                     );
                   })
@@ -226,4 +182,3 @@ function MisCursosAlumno({ user }) {
 }
 
 export default MisCursosAlumno;
-
